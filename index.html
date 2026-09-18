@@ -1,0 +1,519 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Farmhand's Route</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Staatliches&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#E9E3D3; --surface:#F8F5EC; --surface-2:#EFEADB; --ink:#17262A; --ink-2:#55656A; --line:#CFC7B3;
+  --accent:#A66E14; --accent-soft:#F3DFAE; --accent-ink:#1A1408;
+  --red:#B0361F; --teal:#1C716A;
+  --good:#2C7A4B; --warn:#C0661C; --bad:#B0361F;
+  --s-spring:#3F7D3A; --s-summer:#B8860B; --s-fall:#B5561D; --s-winter:#3C6C93; --s-any:#6B6B6B;
+  --p1:#1C716A; --p2:#7B3F8C;
+  --r-crafts:#65733A; --r-pantry:#9E6F25; --r-fish:#3C6C93; --r-boiler:#8B2E2E; --r-board:#7B3F8C; --r-vault:#A66E14;
+  --e-berries:#8B2E5A; --e-kegs:#A66E14; --e-ancient:#7B3F8C; --e-animals:#65733A; --e-starfruit:#C0661C; --e-fish:#3C6C93;
+  --shadow:0 1px 0 rgba(23,38,42,.05),0 10px 28px -18px rgba(23,38,42,.35);
+  --radius:6px;
+  --display:'Staatliches','Arial Narrow',Impact,sans-serif;
+  --body:'Source Sans 3','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono','Cascadia Mono',Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1E21; --surface:#17292D; --surface-2:#1F363B; --ink:#EDE5D0; --ink-2:#A6B2B0; --line:#2E474C;
+    --accent:#EDB53F; --accent-soft:#3A3115; --accent-ink:#1A1408;
+    --red:#E5654D; --teal:#4CBBB0;
+    --good:#5DBA82; --warn:#E39A4A; --bad:#E5654D;
+    --s-spring:#7CC46F; --s-summer:#E8B84A; --s-fall:#E58A4A; --s-winter:#77ABD6; --s-any:#A6B2B0;
+    --p1:#4CBBB0; --p2:#C283D3;
+    --r-crafts:#A9B966; --r-pantry:#D8A650; --r-fish:#77ABD6; --r-boiler:#E06A5E; --r-board:#C283D3; --r-vault:#EDB53F;
+    --e-berries:#E07AA8; --e-kegs:#EDB53F; --e-ancient:#C283D3; --e-animals:#A9B966; --e-starfruit:#E39A4A; --e-fish:#77ABD6;
+    --shadow:none; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1E21; --surface:#17292D; --surface-2:#1F363B; --ink:#EDE5D0; --ink-2:#A6B2B0; --line:#2E474C;
+  --accent:#EDB53F; --accent-soft:#3A3115; --accent-ink:#1A1408;
+  --red:#E5654D; --teal:#4CBBB0;
+  --good:#5DBA82; --warn:#E39A4A; --bad:#E5654D;
+  --s-spring:#7CC46F; --s-summer:#E8B84A; --s-fall:#E58A4A; --s-winter:#77ABD6; --s-any:#A6B2B0;
+  --p1:#4CBBB0; --p2:#C283D3;
+  --r-crafts:#A9B966; --r-pantry:#D8A650; --r-fish:#77ABD6; --r-boiler:#E06A5E; --r-board:#C283D3; --r-vault:#EDB53F;
+  --e-berries:#E07AA8; --e-kegs:#EDB53F; --e-ancient:#C283D3; --e-animals:#A9B966; --e-starfruit:#E39A4A; --e-fish:#77ABD6;
+  --shadow:none; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-inline:clamp(16px,4vw,40px);padding-block:0 64px}
+a{color:var(--teal)}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1080px;margin-inline:auto}
+
+/* masthead */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;
+  padding-block:28px 18px;border-bottom:3px double var(--line)}
+.mast h1{font-family:var(--display);font-size:clamp(40px,7vw,68px);line-height:.92;letter-spacing:.02em;color:var(--ink)}
+.mast h1 span{color:var(--accent)}
+.mast .sub{max-width:52ch;color:var(--ink-2);font-size:15px}
+.stamp{font-family:var(--display);letter-spacing:.08em;font-size:13px;color:var(--red);border:2px solid var(--red);
+  padding:4px 8px;transform:rotate(-2deg);display:inline-block;opacity:.9}
+
+/* section bar: hamburger + current section + pro */
+.views{position:sticky;top:env(safe-area-inset-top,0px);z-index:8;display:flex;gap:12px;margin-top:14px;padding-block:8px;align-items:center;background:var(--bg);border-bottom:1px solid var(--line)}
+.views .hamb{width:44px;height:40px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);cursor:pointer;display:grid;gap:5px;place-content:center;padding:0}
+.views .hamb span{display:block;width:20px;height:2px;background:var(--ink);border-radius:1px;transition:transform .15s,opacity .15s}
+.views .hamb[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.views .hamb[aria-expanded="true"] span:nth-child(2){opacity:0}
+.views .hamb[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.views .cur-view{font-family:var(--display);letter-spacing:.08em;font-size:20px;color:var(--accent);flex:1 1 auto;line-height:1}
+.views .menu{position:absolute;left:0;right:0;top:100%;background:var(--surface);border:1px solid var(--line);border-top:0;box-shadow:0 14px 30px -12px rgba(0,0,0,.45);display:grid;padding:6px;gap:2px;z-index:9}
+.views .menu button{font-family:var(--display);letter-spacing:.08em;font-size:19px;text-align:left;border:0;background:transparent;padding:12px 14px;border-radius:var(--radius);cursor:pointer;color:var(--ink)}
+.views .menu button:hover{background:var(--surface-2)}
+.views .menu button[aria-pressed="true"]{color:var(--accent-ink);background:var(--accent)}
+.views button.pro{font-size:14px;padding:6px 12px;border-radius:999px;border:1px dashed var(--line);background:var(--surface);cursor:pointer;color:var(--ink-2);white-space:nowrap}
+.views button.pro[aria-pressed="true"]{color:var(--bg);background:var(--ink);border-color:var(--ink);border-style:solid}
+.views button.pro::before{content:'\25CB';margin-right:6px}
+.views button.pro[aria-pressed="true"]::before{content:'\25CF'}
+
+/* pro mode: no explanations */
+.callout-line{font-size:15px;color:var(--ink)}
+.callout-body{display:grid;gap:6px}
+body:not(.pro-on) .callout-line{display:none}
+body.pro-on .callout-body,body.pro-on .why,body.pro-on .tag:not(.need):not(.p1):not(.p2):not(.risk):not(.std),body.pro-on .hint,body.pro-on .basics,
+body.pro-on .lblock>p,body.pro-on .season-facts .goal,body.pro-on .season-facts .money,
+body.pro-on .brief h2 small,body.pro-on .eyebrow+.hint,body.pro-on .fsec-h p,body.pro-on .bundle .note,body.pro-on .bcard .note{display:none}
+body.pro-on .step{padding-block:9px}
+body.pro-on .step .meta:empty{display:none}
+
+/* setup summary bar */
+.setup-sum{margin-top:18px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--surface);border:1px solid var(--line);padding:10px 14px;box-shadow:var(--shadow)}
+.setup-sum .sum-p{font-family:var(--display);font-size:22px;letter-spacing:.04em;line-height:1;color:var(--accent)}
+.setup-sum .sum-t{font-size:14px;color:var(--ink-2);flex:1 1 auto}
+.setup-sum .sum-t b{color:var(--ink);font-weight:600}
+.setup-sum button{border:1px solid var(--line);background:var(--surface-2);padding:6px 12px;border-radius:999px;cursor:pointer;font-size:14px}
+.setup{margin-top:12px}
+
+/* phase accordion */
+.phase-h{cursor:pointer;user-select:none}
+.phase-h::after{content:'\25BE';margin-left:auto;color:var(--ink-2);font-size:14px}
+.phase-h .when{margin-left:0}
+.phase-h .cnt{font-family:var(--mono);font-size:12px;color:var(--ink-2);white-space:nowrap}
+.phase.closed .phase-h::after{content:'\25B8'}
+.phase.closed .steps{display:none}
+.phase.complete .phase-h h3{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--line)}
+
+/* season switcher */
+.seasonnext{display:flex;justify-content:space-between;gap:8px;margin-top:18px}
+.seasonnext button{border:1px solid var(--line);background:var(--surface);padding:10px 14px;border-radius:var(--radius);cursor:pointer;font-family:var(--display);letter-spacing:.06em;font-size:16px;color:var(--ink)}
+.seasonnext button:disabled{opacity:.35;cursor:default}
+#route{scroll-margin-top:90px}
+
+/* items (cards) */
+.bfilters{display:grid;gap:10px}
+.empty{font-size:14px;color:var(--ink-2);margin-top:14px}
+.count{font-size:13px;color:var(--ink-2)}
+.bfilters input{font:inherit;font-size:16px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--ink);width:100%}
+.bgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));margin-top:14px}
+.bcard{--ec:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--ec);padding:12px 12px 10px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;box-shadow:var(--shadow)}
+.bcard h3{font-size:16px;font-weight:700;grid-column:1}
+.bcard .fp{grid-column:2;grid-row:1/4;align-self:start;display:grid;gap:2px;justify-items:end}
+.bcard .fp svg{display:block;max-width:96px;height:auto}
+.bcard .fp .sz{font-family:var(--mono);font-size:12px;color:var(--ink);font-weight:600;white-space:nowrap}
+.bcard .fp .sz small{color:var(--ink-2);font-weight:400}
+.bcard .era{grid-column:1;font-family:var(--display);letter-spacing:.08em;font-size:12px;color:var(--ec)}
+.bcard .era span{color:var(--ink-2);font-family:var(--mono);letter-spacing:0;font-size:11.5px;margin-left:6px}
+.bcard .facts{grid-column:1;font-family:var(--mono);font-size:12px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 10px}
+.bcard .note{grid-column:1/-1;font-size:13px;color:var(--ink-2)}
+.bcard .use{grid-column:1;font-size:14px;color:var(--ink);font-weight:600}
+.bcard .role{grid-column:1;font-size:13px;color:var(--ink-2);font-style:italic}
+.bcard .io{grid-column:1;font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600;line-height:1.35}
+.bcard .ups{grid-column:1/-1;font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.bcard .ups b{color:var(--ink);font-weight:600}
+.bcard .mats{grid-column:1/-1;font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600;line-height:1.4}
+.bcard .mats small{color:var(--ink-2);font-weight:400}
+.bcard.guess .sz::after{content:' ?';color:var(--warn)}
+
+/* focus tab */
+.fsec{--fc:var(--ink-2);margin-top:22px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fc);box-shadow:var(--shadow)}
+.fsec-h{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);display:grid;gap:3px}
+.fsec-h .kind{font-family:var(--display);letter-spacing:.12em;font-size:12px;color:var(--fc)}
+.fsec-h h2{font-family:var(--display);font-size:clamp(24px,4vw,30px);letter-spacing:.03em;line-height:1}
+.fsec-h .meta{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.fsec-h p{font-size:14.5px;max-width:80ch;margin-top:4px}
+.fsec-b{padding:14px 16px;display:grid;gap:16px}
+.fsec-b>div>h3{font-family:var(--display);letter-spacing:.1em;font-size:14px;color:var(--ink-2);margin-bottom:8px}
+.fladder{display:grid;gap:0;max-width:560px}
+.fladder .rung{position:relative}
+.fladder .rung .bcard{border-top-width:3px}
+.fladder .link{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:6px 0 6px 18px;font-size:13px;color:var(--ink-2)}
+.fladder .link::before{content:'';width:0;height:26px;border-left:2px solid var(--fc);position:relative}
+.fladder .link span{padding-block:2px}
+.fera{display:grid;gap:10px}
+.fera .fe{border:1px solid var(--line)}
+.fera .fe h4{--ec:var(--ink-2);font-family:var(--display);letter-spacing:.08em;font-size:14px;color:var(--ec);padding:8px 12px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.two{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.two h4{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin-bottom:4px}
+.two ul{margin:0;padding-left:18px;font-size:14px}
+.two li{margin-block:2px}
+
+/* dropdowns and fields */
+.field{display:grid;gap:6px}
+.field .eyebrow{margin-bottom:0}
+.sel{font:inherit;font-size:16px;padding:9px 36px 9px 12px;border:1px solid var(--line);border-radius:var(--radius);background-color:var(--surface-2);color:var(--ink);width:100%;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.dd{position:relative}
+.dd>button{width:100%;text-align:left;font:inherit;font-size:15px;padding:9px 36px 9px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--ink);cursor:pointer;position:relative;line-height:1.35}
+.dd>button::after{content:'\25BE';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--ink-2)}
+.dd>button b{font-weight:600}
+.dd>button small{color:var(--ink-2)}
+.dd .ddpanel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:7;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 14px 30px -12px rgba(0,0,0,.45);padding:6px;display:grid;gap:2px;max-height:60vh;overflow:auto}
+.dd .ddrow{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius);cursor:pointer;font-size:15px;margin:0}
+.dd .ddrow:hover{background:var(--surface-2)}
+.dd .ddrow input{width:18px;height:18px;margin:0;accent-color:var(--accent);flex:0 0 auto}
+.dd .ddrow small{color:var(--ink-2);margin-left:auto;font-family:var(--mono);font-size:11.5px;text-align:right}
+.dd .ddhead{font-family:var(--display);letter-spacing:.1em;font-size:12px;color:var(--ink-2);padding:8px 10px 2px}
+.two-sel{display:grid;gap:8px;grid-template-columns:1fr 1fr}
+@media (max-width:480px){.two-sel{grid-template-columns:1fr}}
+.three-sel{display:grid;gap:8px;grid-template-columns:1fr 1fr 1fr}
+@media (max-width:640px){.three-sel{grid-template-columns:1fr}}
+
+/* brief accordion + phone masthead */
+.brief-h{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.brief-h::after{content:'\25BE';margin-left:auto;color:var(--ink-2);font-size:18px}
+.brief.closed .brief-h::after{content:'\25B8'}
+.brief.closed .brief-grid{display:none}
+@media (max-width:600px){.mast{padding-block:14px 10px}.mast h1{font-size:34px}.stamp{display:none}body.pro-on .mast .sub{display:none}}
+
+/* legend accordion */
+.legend-sec>h2{cursor:pointer;user-select:none;display:flex;align-items:center}
+.legend-sec>h2::after{content:'\25BE';margin-left:auto;font-size:20px;color:var(--ink-2)}
+.legend-sec.closed>h2::after{content:'\25B8'}
+.legend-sec.closed .lblock{display:none}
+
+/* legend */
+.jump{margin-top:14px}
+.legend-sec{margin-top:26px;scroll-margin-top:16px}
+.legend-sec>h2{font-family:var(--display);font-size:clamp(26px,4vw,36px);letter-spacing:.03em;border-left:6px solid var(--accent);padding-left:14px;margin-bottom:12px}
+.lblock{margin-top:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.lblock>h3{font-size:16px;font-weight:700;padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.lblock>p{padding:10px 14px 0;font-size:14.5px;max-width:88ch;color:var(--ink)}
+.lblock>ul{margin:0;padding:10px 14px 12px 32px;font-size:14px;color:var(--ink-2)}
+.lblock>ul li{margin-block:2px}
+.tbl{overflow-x:auto;padding:10px 14px 12px}
+.tbl table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+.tbl th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);border-bottom:2px solid var(--line);padding:6px 8px;white-space:nowrap}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (max-width:640px){
+  .tbl{padding:8px 10px 10px;overflow:visible}
+  .tbl table{min-width:0;display:block;width:100%}
+  .tbl thead{display:none}
+  .tbl tbody,.tbl tr,.tbl td{display:block}
+  .tbl tr{border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px;margin-bottom:8px;background:var(--surface-2)}
+  .tbl tr:last-child{margin-bottom:0}
+  .tbl td{border:0;padding:3px 0;white-space:normal}
+  .tbl td:first-child{font-weight:700;font-size:15px;color:var(--ink);padding-bottom:5px;margin-bottom:3px;border-bottom:1px solid var(--line)}
+  .tbl td:not(:first-child)::before{content:attr(data-label);display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin-bottom:1px}
+  .tbl td:empty{display:none}
+  .tbl td.num{white-space:normal}
+}
+
+/* callout */
+.callout{margin-top:20px;background:var(--surface);border-left:4px solid var(--accent);padding:14px 16px;box-shadow:var(--shadow);display:grid;gap:6px}
+.callout h2{font-family:var(--display);font-size:20px;letter-spacing:.04em}
+.callout p{color:var(--ink);max-width:80ch}
+.callout ul{margin:0;padding-left:20px;color:var(--ink);max-width:80ch}
+.callout li{margin-block:2px}
+
+/* setup */
+.setup{margin-top:28px;display:grid;gap:18px;grid-template-columns:1fr 1fr}
+@media (max-width:760px){.setup{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);padding:16px;box-shadow:var(--shadow)}
+.panel.full{grid-column:1/-1}
+.eyebrow{font-family:var(--display);letter-spacing:.1em;font-size:13px;color:var(--ink-2);text-transform:uppercase;margin-bottom:10px;display:block}
+.opts{display:grid;gap:14px;align-content:start}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.tools button{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:var(--radius);cursor:pointer;font-size:14px}
+.tools button:hover{border-color:var(--ink-2)}
+.hint{font-size:13px;color:var(--ink-2)}
+.who{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.who button{--pc:var(--ink);border:2px solid var(--line);background:var(--surface-2);padding:10px 6px 8px;text-align:center;cursor:pointer;display:grid;gap:2px;border-radius:var(--radius);transition:border-color .12s}
+.who button .code{font-family:var(--display);font-size:22px;line-height:1;color:var(--pc);letter-spacing:.04em}
+.who button .name{font-size:12.5px;color:var(--ink-2)}
+.who button:hover{border-color:var(--pc)}
+.who button[aria-pressed="true"]{border-color:var(--pc);background:var(--surface);box-shadow:inset 0 -3px 0 var(--pc)}
+.who button[aria-pressed="true"] .name{color:var(--ink)}
+.who button.p1{--pc:var(--p1)}
+.who button.p2{--pc:var(--p2)}
+
+/* brief */
+.brief{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);padding:18px;box-shadow:var(--shadow);display:grid;gap:16px}
+.brief h2{font-family:var(--display);font-size:clamp(24px,4vw,32px);letter-spacing:.03em;color:var(--accent)}
+.brief h2 small{font-family:var(--body);font-size:14px;letter-spacing:0;color:var(--ink-2);display:block;margin-top:2px}
+.brief-grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr)}
+@media (max-width:860px){.brief-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.brief-grid{grid-template-columns:1fr}}
+.brief-cell{--sc:var(--ink-2)}
+.brief-cell h3{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--sc);margin-bottom:6px;font-weight:700}
+.brief-cell ul{margin:0;padding-left:18px}
+.brief-cell li{margin-block:3px;font-size:14.5px}
+.brief-cell .money{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-top:6px}
+.brief-cell.wide{grid-column:1/-1}
+.split{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media (max-width:560px){.split{grid-template-columns:1fr}}
+.split div{border:1px solid var(--line);border-left:4px solid var(--pc);padding:10px 12px;background:var(--surface-2)}
+.split div.p1{--pc:var(--p1)}
+.split div.p2{--pc:var(--p2)}
+.split h4{font-family:var(--display);letter-spacing:.08em;font-size:15px;color:var(--pc);margin-bottom:4px}
+.split ul{margin:0;padding-left:18px;font-size:14px}
+.split li{margin-block:2px}
+
+/* season nav */
+.seasonnav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 57px);z-index:5;margin-top:26px;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.seasonnav button{--ec:var(--ink-2);text-align:left;color:var(--ink);border:1px solid var(--line);background:var(--surface);padding:8px 10px;border-radius:var(--radius);display:grid;gap:3px;cursor:pointer;min-width:0}
+.seasonnav button .n{font-family:var(--display);letter-spacing:.06em;font-size:16px;color:var(--ec);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seasonnav button .p{font-family:var(--mono);font-size:11px;color:var(--ink-2);white-space:nowrap}
+.seasonnav button .meter{height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.seasonnav button .meter i{display:block;height:100%;width:0;background:var(--ec)}
+.seasonnav button.cur{border-color:var(--ec);box-shadow:inset 0 -3px 0 var(--ec);background:var(--surface-2)}
+@media (max-width:600px){.seasonnav button{padding:8px 8px}}
+
+/* seasons */
+.season{--ec:var(--ink-2);margin-top:34px;scroll-margin-top:96px}
+.season-head{display:grid;gap:10px;border-left:6px solid var(--ec);padding-left:16px;margin-bottom:16px}
+.season-head .kicker{font-family:var(--display);letter-spacing:.12em;font-size:14px;color:var(--ec)}
+.season-head h2{font-family:var(--display);font-size:clamp(32px,5vw,46px);line-height:1;letter-spacing:.02em}
+.season-facts{display:grid;gap:8px 18px;grid-template-columns:repeat(3,1fr);font-size:14.5px}
+@media (max-width:760px){.season-facts{grid-template-columns:1fr}}
+.season-facts div{background:var(--surface);border:1px solid var(--line);padding:10px 12px}
+.season-facts b{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-bottom:3px;font-weight:700}
+.phase{margin-top:18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.phase-h{display:flex;align-items:baseline;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.phase-h .num{font-family:var(--display);font-size:22px;color:var(--ec);letter-spacing:.04em;line-height:1}
+.phase-h .kind{font-family:var(--display);font-size:13px;letter-spacing:.12em;color:var(--fc);line-height:1;padding:3px 6px;border:1px solid var(--fc);border-radius:3px}
+.phase-h h3{font-size:17px;font-weight:700}
+.phase-h .when{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-2);white-space:nowrap}
+.phase.focus{--fc:var(--ink-2);border-left:4px solid var(--fc)}
+.steps{list-style:none;margin:0;padding:0}
+.step{--pc:transparent;display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;padding:11px 16px 11px 12px;border-bottom:1px solid var(--line);border-left:4px solid var(--pc);align-items:start}
+.step:last-child{border-bottom:0}
+.step.done .t{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--line)}
+.step.dim{opacity:.55}
+.step.p1{--pc:var(--p1)}
+.step.p2{--pc:var(--p2)}
+body:not(.coop-on) .step.p1,body:not(.coop-on) .step.p2{--pc:transparent}
+.step input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ec);cursor:pointer}
+.step .t{font-size:16px;font-weight:600;cursor:pointer}
+.step .cost{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);white-space:nowrap;padding-top:3px}
+@media (max-width:560px){.step{grid-template-columns:auto 1fr}.step .cost{grid-column:2;white-space:normal;padding-top:0}}
+.step .meta{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tag{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface-2)}
+.tag.money{border-color:var(--accent);color:var(--accent)}
+.tag.bundle{border-color:var(--teal);color:var(--teal)}
+.tag.deadline{border-color:var(--red);color:var(--red)}
+.tag.risk{border-color:var(--red);color:var(--red);background:transparent}
+.tag.need{border-style:dashed}
+.tag.std{border-style:dashed;color:var(--warn);border-color:var(--warn)}
+.tag.p1{border-color:var(--p1);color:var(--p1);background:transparent;font-weight:700}
+.tag.p2{border-color:var(--p2);color:var(--p2);background:transparent;font-weight:700}
+body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
+.tag.spring{border-color:var(--s-spring);color:var(--s-spring)}
+.tag.summer{border-color:var(--s-summer);color:var(--s-summer)}
+.tag.fall{border-color:var(--s-fall);color:var(--s-fall)}
+.tag.winter{border-color:var(--s-winter);color:var(--s-winter)}
+.step .why{grid-column:2/-1;font-size:14.5px;color:var(--ink-2);max-width:78ch}
+.step .why summary{cursor:pointer;color:var(--ink-2);font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.step .why p{margin-top:4px;color:var(--ink)}
+.avoid{margin-top:14px;border:1px dashed var(--red);padding:12px 16px;background:var(--surface)}
+.avoid h3{font-family:var(--display);letter-spacing:.08em;font-size:16px;color:var(--red);margin-bottom:6px}
+.avoid ul{margin:0;padding-left:18px;font-size:14.5px}
+.avoid li{margin-block:2px}
+
+/* bundles */
+.roomnav{margin-top:14px;display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}
+@media (max-width:560px){.roomnav{grid-template-columns:repeat(2,1fr)}}
+.roomnav div{--rc:var(--ink-2);border:1px solid var(--line);border-left:4px solid var(--rc);background:var(--surface);padding:8px 10px;display:grid;gap:2px}
+.roomnav .n{font-family:var(--display);letter-spacing:.06em;font-size:14px;color:var(--rc);line-height:1.1}
+.roomnav .p{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.roomnav .meter{height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.roomnav .meter i{display:block;height:100%;width:0;background:var(--rc)}
+.roomnav .rw{font-size:12px;color:var(--ink-2)}
+.bgrid.bundles{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));align-items:start}
+.bundle{--rc:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--rc);box-shadow:var(--shadow)}
+.bundle-h{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 12px 8px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.bundle-h .room{grid-column:1;font-family:var(--display);letter-spacing:.1em;font-size:11.5px;color:var(--rc)}
+.bundle-h h3{grid-column:1;font-size:16px;font-weight:700}
+.bundle-h .cnt{grid-column:2;grid-row:1/3;font-family:var(--mono);font-size:12px;color:var(--ink-2);align-self:center;white-space:nowrap}
+.bundle-h .reward{grid-column:1/-1;font-size:12.5px;color:var(--ink-2)}
+.bundle-h .reward b{color:var(--ink);font-weight:600}
+.bundle.complete .bundle-h h3{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--line)}
+.bundle .bitems{list-style:none;margin:0;padding:0}
+.bitem{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;padding:9px 12px;border-bottom:1px solid var(--line);align-items:start}
+.bitem:last-child{border-bottom:0}
+.bitem input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--rc);cursor:pointer}
+.bitem .t{font-size:15px;font-weight:600;cursor:pointer}
+.bitem.done .t{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--line)}
+.bitem .qty{font-family:var(--mono);font-size:12px;color:var(--ink-2);white-space:nowrap;padding-top:2px}
+.bitem .how{grid-column:2/-1;font-size:13.5px;color:var(--ink)}
+.bitem .meta{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.bitem .note{grid-column:2/-1;font-size:13px;color:var(--ink-2)}
+.bundle .rmnote{padding:8px 12px;font-size:12.5px;color:var(--ink-2);border-top:1px dashed var(--line)}
+
+/* finish */
+.finish{margin-top:30px;background:var(--ink);color:var(--bg);padding:20px;display:grid;gap:10px}
+.finish h2{font-family:var(--display);letter-spacing:.06em;font-size:28px;color:var(--accent)}
+.finish ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.notes{margin-top:26px;font-size:14px;color:var(--ink-2);display:grid;gap:8px;max-width:88ch}
+.notes h2{font-family:var(--display);letter-spacing:.08em;font-size:18px;color:var(--ink)}
+.notes ul{margin:0;padding-left:18px}
+.notes li{margin-block:2px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  body{background:#fff;color:#000;padding-inline:0}
+  .setup,.tools,.seasonnav,.toast,.views{display:none!important}
+  .phase,.brief,.season-facts div,.avoid,.callout,.bundle{box-shadow:none;break-inside:avoid}
+  details>summary{display:none}
+  details:not([open])>*:not(summary){display:block}
+}
+</style>
+
+<div class="wrap">
+<header class="mast">
+  <div>
+    <h1>FARMHAND'S <span>ROUTE</span></h1>
+    <p class="sub">Stardew Valley 1.6, two players, one farm. Community Center done by Winter 28 of Year 1, with a money engine that carries into Year 2.</p>
+  </div>
+  <span class="stamp">VANILLA 1.6 / CO-OP</span>
+</header>
+
+<nav class="views" id="views" aria-label="Sections">
+  <button type="button" id="menuBtn" class="hamb" aria-expanded="false" aria-controls="menuPanel" aria-label="Open sections menu"><span></span><span></span><span></span></button>
+  <span class="cur-view" id="curView">Route</span>
+  <button type="button" id="proBtn" class="pro" aria-pressed="true" title="Pro mode hides every explanation">Pro</button>
+  <div class="menu" id="menuPanel" hidden>
+    <button type="button" id="view-btn-route" data-view="route">Route</button>
+    <button type="button" id="view-btn-bundles" data-view="bundles">Bundles</button>
+    <button type="button" id="view-btn-focus" data-view="focus">Focus</button>
+    <button type="button" id="view-btn-legend" data-view="legend">Legend</button>
+    <button type="button" id="view-btn-items" data-view="items">Items</button>
+  </div>
+</nav>
+
+<div id="view-route">
+<section class="callout" aria-label="How the year works">
+  <h2>ONE YEAR, SIX ROOMS</h2>
+  <p class="callout-line">Tick steps as you go. Spring forage and the Egg Festival cannot be redone this year.</p>
+  <div class="callout-body">
+  <p>The Community Center has six rooms and every bundle item comes from a season, a place and often a time of day or a weather. Most of Year 1 is flexible; a handful of windows are not. The route puts the one-shot items first in each season, keeps one player on the field and one on the water and in the mines, and unlocks the rooms in the order that pays back fastest: the Vault money for the bus, the Boiler Room for minecarts, the Crafts Room for the Quarry, the Pantry for the Greenhouse.</p>
+  <ul>
+    <li><b>Every step is one line.</b> The cost names each item. "Why" is folded away unless you turn Pro off.</li>
+    <li><b>Ticks are saved on this device.</b> Each phone keeps its own; a shared list needs one phone.</li>
+    <li><b>Player 1 farms, Player 2 fishes and mines.</b> Turn co-op off to see everything as one list.</li>
+  </ul>
+  </div>
+</section>
+
+<div class="setup-sum" id="setupSum"></div>
+
+<section class="setup" aria-label="Setup" id="setup">
+  <div class="panel opts">
+    <div class="field"><label class="eyebrow" for="coopSel">Players</label><select id="coopSel" class="sel"></select></div>
+    <div class="field" id="whoField"><span class="eyebrow">Show steps for</span><div class="who" id="who"></div><p class="hint" style="margin-top:6px">Each phone picks its own player. Both shows the whole day.</p></div>
+  </div>
+  <div class="panel opts">
+    <div class="field"><label class="eyebrow" for="setSel">Bundle set</label><select id="setSel" class="sel"></select><p class="hint" style="margin-top:6px">Standard is the game default. Remixed is chosen when the farm is created; the Bundles section lists every variant.</p></div>
+    <div class="field"><span class="eyebrow">Money engines</span><div class="dd" id="engDD"></div><p class="hint" style="margin-top:6px">Each engine adds its own steps to the seasons below and a ladder in Focus.</p></div>
+    <div class="tools">
+      <button type="button" id="copyBtn">Copy route as text</button>
+      <button type="button" id="printBtn">Print</button>
+      <button type="button" id="resetBtn">Clear ticks</button>
+    </div>
+  </div>
+</section>
+
+<section class="brief" id="brief" aria-live="polite"></section>
+
+<nav class="seasonnav" id="seasonnav" aria-label="Seasons"></nav>
+
+<div id="route"></div>
+
+<div class="seasonnext" id="seasonnext"></div>
+
+<section class="finish" id="finish"></section>
+
+<section class="notes basics" id="notes"></section>
+</div>
+
+<div id="view-bundles" hidden>
+  <section class="callout" aria-label="About bundles">
+    <h2>BUNDLES</h2>
+    <p class="callout-line">Tick items as you hand them in. A bundle strikes through when it has enough.</p>
+    <div class="callout-body"><p>Every bundle in the Community Center as a card: the items it takes, how many of them you need, where and when each one comes from, and the reward. One-shot items carry a red tag. Filter by room, and switch to the remixed set if your farm was created with remixed bundles; the game picks one variant per slot, so tick the ones you actually see on the wall.</p></div>
+  </section>
+  <div class="panel" style="margin-top:18px">
+    <div class="three-sel">
+      <div class="field"><label class="eyebrow" for="roomSel">Room</label><select id="roomSel" class="sel"></select></div>
+      <div class="field"><label class="eyebrow" for="bsetSel">Bundle set</label><select id="bsetSel" class="sel"></select></div>
+      <div class="field"><label class="eyebrow" for="bshowSel">Show</label><select id="bshowSel" class="sel"></select></div>
+    </div>
+  </div>
+  <div class="roomnav" id="roomnav"></div>
+  <p class="count" id="bundleCount" style="margin-top:12px"></p>
+  <div class="bgrid bundles" id="bundleList"></div>
+</div>
+
+<div id="view-focus" hidden>
+  <section class="callout" aria-label="About focus">
+    <h2>FOCUS</h2>
+    <p class="callout-line">Pick money engines. Each shows its ladder and adds steps to the route.</p>
+    <div class="callout-body"><p>An engine is shown as a ladder: what you buy or build first at the top, what it turns into below, with the numbers on every rung. Whatever you pick here also adds phases to each season in the Route tab, so the ticks are shared. Two engines is plenty for Year 1; the berries carry Spring to Fall, and one of the others sets up Year 2.</p></div>
+  </section>
+  <div class="panel" style="margin-top:18px">
+    <div class="field"><span class="eyebrow">Money engines</span><div class="dd" id="engDD2"></div></div>
+  </div>
+  <div id="focusBody"></div>
+</div>
+
+<div id="view-legend" hidden>
+  <section class="callout" aria-label="About the legend">
+    <h2>LEGEND</h2>
+    <p class="callout-line">Reference tables. Tap a section.</p>
+    <div class="callout-body"><p>The tables the game never puts on one screen: every crop with its seed price and profit per day, every bundle fish with its window, birthdays with a cheap loved gift, the skills and professions, energy and luck, the calendar with its festivals and closed days, and the artisan maths.</p></div>
+  </section>
+  <div class="panel" style="margin-top:14px"><div class="field"><label class="eyebrow" for="legSel">Jump to section</label><select id="legSel" class="sel"></select></div></div>
+  <div id="legendBody"></div>
+</div>
+
+<div id="view-items" hidden>
+  <section class="callout" aria-label="About items">
+    <h2>ITEMS</h2>
+    <p class="callout-line">Tools, machines and buildings with cost, materials and one line on what it is for.</p>
+    <div class="callout-body"><p>Every tool with its upgrade tiers, every machine with its exact recipe and unlock, every building Robin or the Wizard sells with its footprint drawn to scale. Search by name or by what it does.</p></div>
+  </section>
+  <div class="panel bfilters" style="margin-top:18px">
+    <input type="search" id="iq" placeholder="Search items" autocomplete="off" aria-label="Search items">
+    <div class="two-sel"><select id="icatSel" class="sel" aria-label="Item type"></select><select id="isrcSel" class="sel" aria-label="Where from"></select></div>
+    <p class="count" id="icount"></p>
+  </div>
+  <div class="bgrid" id="itemList"></div>
+</div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="js/data.js?v=1"></script>
+<script src="js/bundles.js?v=1"></script>
+<script src="js/legend.js?v=1"></script>
+<script src="js/items.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
