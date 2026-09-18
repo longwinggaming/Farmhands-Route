@@ -88,6 +88,37 @@
   if(qa('#focusBody .rung').length < 20) errors.push('focus: too few ladder rungs');
   var fcb = q('#focusBody input[type=checkbox]'); fcb.checked = true; fcb.dispatchEvent(new Event('change')); if(!fcb.closest('.step').classList.contains('done')) errors.push('focus step tick failed'); fcb.checked=false; fcb.dispatchEvent(new Event('change'));
   scan('focus');
+  /* ---- Perfection ---- */
+  if(q('#view-btn-perf').hidden){ log.push('perfection tab hidden (no data yet)'); } else {
+  goView('perf');
+  if(!q('#pmeter .big b')) errors.push('perfection meter missing');
+  var prows = qa('#pmeter .prow'); if(prows.length < 10) errors.push('perfection: only '+prows.length+' category rows');
+  prows.forEach(function(b, i){ click(qa('#pmeter .prow')[i]); if(qa('#pmeter .prow')[i].getAttribute('aria-pressed')!=='true') errors.push('perf row '+i+' not pressed'); if(!qa('#perfList .bundle').length) errors.push('perf cat '+i+' shows no cards'); scan('perf cat '+i); });
+  click(qa('#pmeter .prow')[0]); click(qa('#pmeter .prow')[0]);
+  if(q('#pcatSel').value!=='all') errors.push('perf cat did not reset to all');
+  if(!qa('#perfRoute .phase').length) errors.push('perfection road missing');
+  qa('#perfRoute .phase').forEach(function(ph, i){ var hd = ph.querySelector('.phase-h'); var was = ph.classList.contains('closed'); click(hd); if(ph.classList.contains('closed')===was) errors.push('perf phase '+i+' did not toggle'); });
+  var pcb = q('#perfList input[type=checkbox]'); var before = q('#pmeter .big b').textContent;
+  pcb.checked = true; pcb.dispatchEvent(new Event('change'));
+  if(!q('#perfList input[type=checkbox]').checked) errors.push('perf tick lost after re-render');
+  var pcb2 = q('#perfList input[type=checkbox]'); pcb2.checked = false; pcb2.dispatchEvent(new Event('change'));
+  ['todo','all'].forEach(function(v){ setSel('pshowSel', v); log.push('perf show '+v+': '+q('#pcount').textContent); });
+  ['walnut','ancient','zzzz',''].forEach(function(term){ var inp = q('#pq'); inp.value = term; inp.dispatchEvent(new Event('input')); log.push('perf search "'+term+'": '+q('#pcount').textContent); if(term==='zzzz' && !q('#perfList .empty')) errors.push('perf search: no empty message'); });
+  scan('perfection');
+  }
+  /* ---- People ---- */
+  if(q('#view-btn-people').hidden){ log.push('people tab hidden (no data yet)'); } else {
+  goView('people');
+  qa('#pplSel option').forEach(function(o){ setSel('pplSel', o.value); var n = qa('#peopleList .bundle').length; if(!n) errors.push('people '+o.value+': no cards'); log.push('people '+o.value+': '+n); });
+  setSel('pplSel','all');
+  var ppcb = q('#peopleList input[type=checkbox]'); ppcb.checked = true; ppcb.dispatchEvent(new Event('change')); if(!q('#peopleList input[type=checkbox]').checked) errors.push('people tick lost'); var ppcb2 = q('#peopleList input[type=checkbox]'); ppcb2.checked = false; ppcb2.dispatchEvent(new Event('change'));
+  ['todo','all'].forEach(function(v){ setSel('pplShowSel', v); });
+  scan('people');
+  }
+  /* icons */
+  goView('bundles'); setSel('roomSel','all'); if(qa('#bundleList .ico').length < 100) errors.push('bundle icons missing: '+qa('#bundleList .ico').length);
+  var probe = q('#bundleList .ico'); if(probe){ var bg = getComputedStyle(probe).backgroundImage; if(bg.indexOf('sheet.png')===-1) errors.push('icon background not the sheet: '+bg); }
+  goView('items'); if(qa('#itemList .ico').length < 50) errors.push('item icons missing');
   /* ---- Legend ---- */
   goView('legend');
   qa('#legSel option').forEach(function(o){ if(!o.value) return; setSel('legSel', o.value); var sec = q('#leg-'+o.value); if(!sec || sec.classList.contains('closed')) errors.push('legend '+o.value+' did not open'); if(!sec.querySelectorAll('table').length && !sec.querySelectorAll('.lblock').length) errors.push('legend '+o.value+' empty'); });

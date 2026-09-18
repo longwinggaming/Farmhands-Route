@@ -225,7 +225,8 @@ var NOTES = {
   'Large animal products depend on hearts and mood, which the wiki gives as a formula, not a date. Pet daily and they arrive.',
   'Remixed bundles: the game picks one variant per slot at creation. The Bundles section lists them all; the route only follows the standard set.',
   'Speed-Gro put on a tile after the seed is in still works in 1.6, but only on the growth stages still to come; the route fertilises before planting to be safe.',
-  'The Community Center never closes, so the Spring 13 hand-in at 10pm works; if it does not on your build, do it Spring 14 morning and fertilise then.'
+  'The Community Center never closes, so the Spring 13 hand-in at 10pm works; if it does not on your build, do it Spring 14 morning and fertilise then.',
+  'Icons and portraits come from the Stardew Valley Wiki (CC BY-NC-SA 3.0); the pixel art is ConcernedApe’s. This planner is private and not for sale.'
  ]
 };
 

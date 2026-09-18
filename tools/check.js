@@ -6,8 +6,10 @@ var root = path.join(__dirname, '..');
 var ctx = {window:{}, console:console};
 ctx.window = ctx;
 vm.createContext(ctx);
-['js/data.js','js/bundles.js','js/legend.js','js/items.js'].forEach(function(f){
-  vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, {filename:f});
+['js/data.js','js/bundles.js','js/legend.js','js/items.js','js/perfection.js','js/people.js','js/art.js'].forEach(function(f){
+  var p = path.join(root, f);
+  if(!fs.existsSync(p)){ console.log('note: '+f+' not present yet, its checks are skipped'); return; }
+  vm.runInContext(fs.readFileSync(p, 'utf8'), ctx, {filename:f});
 });
 var errs = [], warns = [];
 function err(m){ errs.push(m); }
@@ -135,9 +137,67 @@ var inames = {};
   if(!it.gold && !it.mats && !(it.tiers&&it.tiers.length)) warn('item '+it.name+': no cost, no materials, no tiers');
   if(PLACEHOLDER.test(JSON.stringify(it))) err('item '+it.name+': placeholder');
 });
+/* perfection */
+var PF = ctx.PERF;
+if(PF===undefined){ /* not shipped yet */ }
+else if(!PF || !Array.isArray(PF.cats) || !Array.isArray(PF.route)) err('PERF needs cats and route');
+else {
+  var wsum = 0, pfKeys = {};
+  PF.cats.forEach(function(cat){
+    if(!cat.id || !cat.name || !(cat.weight>0)) err('perf cat missing id/name/weight: '+JSON.stringify(cat).slice(0,60));
+    wsum += cat.weight||0;
+    if(!Array.isArray(cat.groups) || !cat.groups.length) return err('perf cat '+cat.id+': no groups');
+    var n = 0;
+    cat.groups.forEach(function(g){
+      if(!g.name) err('perf cat '+cat.id+': group without name');
+      (g.items||[]).forEach(function(it){
+        n++;
+        if(!it.id || !it.name) err('perf '+cat.id+'/'+g.name+': item without id or name: '+JSON.stringify(it).slice(0,60));
+        var k = cat.id+':'+it.id; if(pfKeys[k]) err('perf duplicate item id '+k); pfKeys[k] = true;
+        if(it.count!=null && !(it.count>=1)) err('perf '+k+': bad count');
+        if(PLACEHOLDER.test(JSON.stringify(it))) err('perf '+k+': placeholder');
+      });
+    });
+    if(cat.expect && n!==cat.expect) err('perf cat '+cat.id+': '+n+' items, expected '+cat.expect);
+  });
+  if(wsum!==100) err('perf weights sum to '+wsum+', not 100');
+  PF.route.forEach(function(p){
+    if(!p.n || !p.t || !p.when) err('perf route phase needs n, t, when: '+(p.t||'?'));
+    (p.steps||[]).forEach(function(st){ checkStep(st, 'perf route '+p.n); });
+  });
+}
+/* people */
+var PP = ctx.PEOPLE;
+if(PP===undefined){ /* not shipped yet */ }
+else if(!PP || !Array.isArray(PP.cards) || !PP.cards.length) err('PEOPLE needs cards');
+else {
+  var cids = {};
+  PP.cards.forEach(function(c){
+    if(!c.id || !c.name || !c.kind) err('people card missing id/name/kind: '+(c.name||'?'));
+    if(cids[c.id]) err('people duplicate id '+c.id); cids[c.id] = true;
+    if(['Bachelor','Bachelorette','Other'].indexOf(c.kind)===-1) err('people '+c.id+': bad kind '+c.kind);
+    if(!Array.isArray(c.path) || !c.path.length) err('people '+c.id+': no path');
+    var pids = {};
+    (c.path||[]).forEach(function(it){
+      if(!it.id || !it.t) err('people '+c.id+': path item without id or t');
+      if(pids[it.id]) err('people '+c.id+': duplicate path id '+it.id); pids[it.id] = true;
+      if(PLACEHOLDER.test(JSON.stringify(it))) err('people '+c.id+'/'+it.id+': placeholder');
+    });
+    if(PLACEHOLDER.test((c.loves||'')+(c.likes||'')+(c.hates||'')+(c.cheap||'')+(c.lives||'')+(c.find||''))) err('people '+c.id+': placeholder in bio');
+  });
+  var cand = PP.cards.filter(function(c){ return c.kind!=='Other'; }).length;
+  if(cand!==12) err('people: expected 12 candidates, got '+cand);
+}
+/* art */
+if(ctx.ART){
+  var missing = [];
+  Object.keys(ctx.ITEM_INFO||{}).forEach(function(n){ if(!/^\d/.test(n) && !ctx.ART.map[n]) missing.push(n); });
+  if(missing.length) warn('no icon for bundle items: '+missing.join(', '));
+}
 /* report */
 var stepCount = Object.keys(ids).length;
-console.log('steps: '+stepCount+', bundles: '+(BU||[]).length+', bundle items: '+Object.keys(itemKeys).length+', legend sections: '+(L||[]).length+', items: '+(I||[]).length);
+var pfItems = 0; ((PF&&PF.cats)||[]).forEach(function(c){ c.groups.forEach(function(g){ pfItems += (g.items||[]).length; }); });
+console.log('steps: '+stepCount+', bundles: '+(BU||[]).length+', bundle items: '+Object.keys(itemKeys).length+', legend sections: '+(L||[]).length+', items: '+(I||[]).length+', perfection requirements: '+pfItems+', people cards: '+((PP&&PP.cards)||[]).length);
 warns.forEach(function(w){ console.log('warn: '+w); });
 errs.forEach(function(e){ console.log('ERROR: '+e); });
 console.log(errs.length ? errs.length+' errors, '+warns.length+' warnings' : 'no errors, '+warns.length+' warnings');

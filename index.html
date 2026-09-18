@@ -369,6 +369,36 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
 .bitem .note{grid-column:2/-1;font-size:13px;color:var(--ink-2)}
 .bundle .rmnote{padding:8px 12px;font-size:12.5px;color:var(--ink-2);border-top:1px dashed var(--line)}
 
+/* perfection */
+.pmeter{margin-top:18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);padding:14px 16px;display:grid;gap:0}
+.pmeter .big{display:flex;align-items:baseline;gap:12px;padding-bottom:10px}
+.pmeter .big b{font-family:var(--display);font-size:clamp(40px,8vw,64px);line-height:1;color:var(--accent);font-weight:400}
+.pmeter .big span{font-size:14px;color:var(--ink-2)}
+.pmeter .prow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;padding:7px 0;cursor:pointer;color:var(--ink);width:100%}
+.pmeter .prow .n{font-size:14.5px;font-weight:600}
+.pmeter .prow .w{font-family:var(--mono);font-size:12px;color:var(--ink-2);white-space:nowrap}
+.pmeter .prow .meter{grid-column:1/-1;height:5px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.pmeter .prow .meter i{display:block;height:100%;background:var(--accent)}
+.pmeter .prow[aria-pressed="true"] .n{color:var(--accent)}
+.pmeter .prow.full .n{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--line)}
+#perfRoute{margin-top:6px}
+.bundle .bio{padding:8px 12px;font-size:13px;color:var(--ink-2);border-bottom:1px solid var(--line);display:grid;gap:3px}
+.bundle .bio b{color:var(--ink);font-weight:600}
+.bitem .hearts{font-family:var(--display);font-size:18px;letter-spacing:.04em;color:var(--rc);line-height:1;padding-top:2px;min-width:2.6ch}
+#perfRoute .phase{--ec:var(--accent)}
+
+/* icons from the sprite sheet */
+.ico{display:inline-block;vertical-align:middle;background-image:url(art/sheet.png);background-repeat:no-repeat;image-rendering:pixelated;flex:0 0 auto}
+.bitem .t .ico,.tbl td .ico{margin-right:6px;vertical-align:-8px}
+.tbl td .ico{vertical-align:-6px}
+.bundle-h.withpic{grid-template-columns:auto 1fr auto}
+.bundle-h.withpic .pic{grid-column:1;grid-row:1/4;align-self:start;padding-top:2px}
+.bundle-h.withpic .room,.bundle-h.withpic h3{grid-column:2}
+.bundle-h.withpic .cnt{grid-column:3}
+.bundle-h.withpic .reward{grid-column:2/-1}
+.bcard .fp .ico{margin-bottom:4px}
+.pmeter .prow .n .ico{margin-right:8px;vertical-align:-9px}
+
 /* finish */
 .finish{margin-top:30px;background:var(--ink);color:var(--bg);padding:20px;display:grid;gap:10px}
 .finish h2{font-family:var(--display);letter-spacing:.06em;font-size:28px;color:var(--accent)}
@@ -383,7 +413,7 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
 @media print{
   body{background:#fff;color:#000;padding-inline:0}
   .setup,.tools,.seasonnav,.toast,.views{display:none!important}
-  .phase,.brief,.season-facts div,.avoid,.callout,.bundle{box-shadow:none;break-inside:avoid}
+  .phase,.brief,.season-facts div,.avoid,.callout,.bundle,.pmeter{box-shadow:none;break-inside:avoid}
   details>summary{display:none}
   details:not([open])>*:not(summary){display:block}
 }
@@ -406,6 +436,8 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
     <button type="button" id="view-btn-route" data-view="route">Route</button>
     <button type="button" id="view-btn-bundles" data-view="bundles">Bundles</button>
     <button type="button" id="view-btn-focus" data-view="focus">Focus</button>
+    <button type="button" id="view-btn-perf" data-view="perf">Perfection</button>
+    <button type="button" id="view-btn-people" data-view="people">People</button>
     <button type="button" id="view-btn-legend" data-view="legend">Legend</button>
     <button type="button" id="view-btn-items" data-view="items">Items</button>
   </div>
@@ -486,6 +518,32 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
   <div id="focusBody"></div>
 </div>
 
+<div id="view-perf" hidden>
+  <section class="callout" aria-label="About perfection">
+    <h2>PERFECTION</h2>
+    <p class="callout-line">The game’s 100% meter, requirement by requirement. Tick as you go.</p>
+    <div class="callout-body"><p>Perfection is the post-Community-Center goal the game tracks in Qi’s Walnut Room on Ginger Island: eleven categories weighted the way the game weighs them, from shipping one of every crop to a ten-million-gold clock. This tab lists every requirement as a tickable line with where it comes from, and a road to it in phases. It is a two- to three-year project; the Year 1 route already sets up the money.</p></div>
+  </section>
+  <div class="pmeter" id="pmeter"></div>
+  <div class="panel bfilters" style="margin-top:18px">
+    <input type="search" id="pq" placeholder="Search requirements" autocomplete="off" aria-label="Search requirements">
+    <div class="two-sel"><select id="pcatSel" class="sel" aria-label="Category"></select><select id="pshowSel" class="sel" aria-label="Show"></select></div>
+    <p class="count" id="pcount"></p>
+  </div>
+  <div id="perfRoute"></div>
+  <div class="bgrid bundles" id="perfList"></div>
+</div>
+
+<div id="view-people" hidden>
+  <section class="callout" aria-label="About people">
+    <h2>PEOPLE</h2>
+    <p class="callout-line">The twelve you can marry: birthdays, gifts, every heart event and its trigger. Tick the path as you walk it.</p>
+    <div class="callout-body"><p>Friendship is 250 points a heart: talking is 20 a day, a liked gift 45, a loved one 80, eight times that on a birthday, two gifts a week. Candidates stop at 8 hearts until you give a Bouquet, and each heart event fires once when you walk into the right place at the right time with enough hearts. This tab lists the events with their exact triggers, the cheap loved gifts, the marriage steps, and the other villagers whose scenes hand you something useful.</p></div>
+  </section>
+  <div class="panel" style="margin-top:18px"><div class="two-sel"><div class="field"><label class="eyebrow" for="pplSel">Show</label><select id="pplSel" class="sel"></select></div><div class="field"><label class="eyebrow" for="pplShowSel">Steps</label><select id="pplShowSel" class="sel"></select></div></div></div>
+  <div class="bgrid bundles" id="peopleList"></div>
+</div>
+
 <div id="view-legend" hidden>
   <section class="callout" aria-label="About the legend">
     <h2>LEGEND</h2>
@@ -512,8 +570,11 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/data.js?v=6"></script>
-<script src="js/bundles.js?v=6"></script>
-<script src="js/legend.js?v=6"></script>
-<script src="js/items.js?v=6"></script>
-<script src="js/app.js?v=6"></script>
+<script src="js/data.js?v=7"></script>
+<script src="js/bundles.js?v=7"></script>
+<script src="js/legend.js?v=7"></script>
+<script src="js/items.js?v=7"></script>
+<script src="js/perfection.js?v=7"></script>
+<script src="js/people.js?v=7"></script>
+<script src="js/art.js?v=7"></script>
+<script src="js/app.js?v=7"></script>

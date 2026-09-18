@@ -4,9 +4,9 @@
 
 /* ---------- STATE ---------- */
 var KEY = 'farmhand-route:v1';
-var VIEWS = ['route','bundles','focus','legend','items'];
+var VIEWS = ['route','bundles','focus','perf','people','legend','items'];
 var state = {view:'route', pro:true, season:'spring', setupOpen:true, briefOpen:false, coop:true, who:'both', set:'std', engines:['berries'],
-  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:''};
+  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:'', pcat:'all', pshow:'all', pq:'', ppl:'all', pplShow:'all'};
 try{
   var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
   if(saved && typeof saved === 'object'){
@@ -28,12 +28,22 @@ try{
     if(typeof saved.iCat==='string') state.iCat = saved.iCat;
     if(typeof saved.iSrc==='string') state.iSrc = saved.iSrc;
     if(typeof saved.iQ==='string') state.iQ = saved.iQ;
+    if(typeof saved.pcat==='string') state.pcat = saved.pcat;
+    if(['all','todo'].indexOf(saved.pshow)>-1) state.pshow = saved.pshow;
+    if(typeof saved.pq==='string') state.pq = saved.pq;
+    if(typeof saved.ppl==='string') state.ppl = saved.ppl;
+    if(['all','todo'].indexOf(saved.pplShow)>-1) state.pplShow = saved.pplShow;
   }
 }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 
 /* ---------- HELPERS ---------- */
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function icon(name, size){
+  var a = window.ART && ART.map[name]; if(!a) return '';
+  var s = size || 32, k = s / a[2];
+  return '<i class="ico" style="width:'+s+'px;height:'+s+'px;background-position:-'+(a[0]*k)+'px -'+(a[1]*k)+'px;background-size:'+(ART.w*k)+'px '+(ART.h*k)+'px" aria-hidden="true"></i>';
+}
 function joinList(arr, none){
   if(!arr.length) return none || 'nothing';
   if(arr.length===1) return arr[0];
@@ -234,6 +244,11 @@ function renderRoute(){
   }
   sec.innerHTML = h;
   root.appendChild(sec);
+  bindPhaseHeads(root);
+  bindSteps(root, function(){ renderNav(); refreshPhaseCounts(); });
+  renderNext();
+}
+function bindPhaseHeads(root){
   root.querySelectorAll('.phase-h').forEach(function(hd){
     var go = function(){
       var phEl = hd.parentNode, pid = phEl.getAttribute('data-pid');
@@ -244,8 +259,10 @@ function renderRoute(){
     hd.addEventListener('click', go);
     hd.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); go(); } });
   });
-  bindSteps(root, function(){ renderNav(); refreshPhaseCounts(); });
-  renderNext();
+}
+function phaseBlockHTML(ph, open, c){
+  var head = '<span class="num">'+esc(ph.n)+'</span><h3>'+esc(ph.t)+'</h3><span class="when">'+esc(ph.when)+'</span><span class="cnt">'+c.done+'/'+c.tot+'</span>';
+  return '<div class="phase'+(open?'':' closed')+(c.tot && c.done===c.tot?' complete':'')+'" data-pid="'+esc(ph.pid)+'"><div class="phase-h" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+head+'</div><ul class="steps">'+ph.steps.filter(stepVisible).map(stepHTML).join('')+'</ul></div>';
 }
 function refreshPhaseCounts(){
   var season = currentSeason();
@@ -321,8 +338,11 @@ function routeText(){
 }
 
 /* ---------- VIEWS + MENU + PRO ---------- */
-var VIEW_NAMES = {route:'Route', bundles:'Bundles', focus:'Focus', legend:'Legend', items:'Items'};
+var VIEW_NAMES = {route:'Route', bundles:'Bundles', focus:'Focus', perf:'Perfection', people:'People', legend:'Legend', items:'Items'};
 function renderViews(){
+  /* tabs whose data file is not shipped yet stay out of the menu */
+  var gated = {perf:!!window.PERF, people:!!window.PEOPLE};
+  Object.keys(gated).forEach(function(v){ var b = document.getElementById('view-btn-'+v); if(b) b.hidden = !gated[v]; if(!gated[v] && state.view===v) state.view = 'route'; });
   VIEWS.forEach(function(v){
     var b = document.getElementById('view-btn-'+v); if(b) b.setAttribute('aria-pressed', String(state.view===v));
     var el = document.getElementById('view-'+v); if(el) el.hidden = (state.view!==v);
@@ -380,7 +400,7 @@ function bundleCard(b){
     if(it.q) tags += '<span class="tag">'+esc(it.q)+'</span>';
     if(it.risk) tags += '<span class="tag risk">'+esc(it.risk)+'</span>';
     h += '<li class="bitem'+(done?' done':'')+'"><input type="checkbox" id="chk-'+esc(key)+'"'+(done?' checked':'')+'>'+
-      '<label class="t" for="chk-'+esc(key)+'">'+esc(it.name)+'</label><span class="qty">'+(it.qty>1?'x'+it.qty:'')+'</span>'+
+      '<label class="t" for="chk-'+esc(key)+'">'+icon(it.name, 28)+esc(it.name)+'</label><span class="qty">'+(it.qty>1?'x'+it.qty:'')+'</span>'+
       '<div class="how">'+esc(it.how)+(when.length?' · '+esc(when.join(', ')):'')+'</div>'+
       '<div class="meta">'+tags+'</div>'+
     '</li>';
@@ -413,8 +433,9 @@ function renderBundles(){
 /* ---------- FOCUS ---------- */
 function rungCard(r, ek){
   var facts = (r.facts||[]).map(function(f){ return '<span>'+esc(f)+'</span>'; }).join('');
+  var rico = icon(r.icon || r.name.replace(/\s*\(.*\)$/,''), 48);
   return '<div class="bcard" style="--ec:var(--e-'+esc(ek)+')">'+
-    '<h3>'+esc(r.name)+'</h3>'+
+    '<h3>'+esc(r.name)+'</h3>'+(rico?'<div class="fp">'+rico+'</div>':'')+
     '<div class="era">'+esc((r.kind||'').toUpperCase())+(r.sub?'<span>'+esc(r.sub)+'</span>':'')+'</div>'+
     (r.use?'<div class="use">'+esc(r.use)+'</div>':'')+
     (r.io?'<div class="io">'+esc(r.io)+'</div>':'')+
@@ -454,11 +475,126 @@ function renderFocus(){
   bindSteps(el, function(){ renderNav(); });
 }
 
+/* ---------- PERFECTION ---------- */
+function perfKey(cat, it){ return 'pf:'+cat.id+':'+it.id; }
+function perfCatCounts(cat){
+  var tot=0, done=0;
+  cat.groups.forEach(function(g){ g.items.forEach(function(it){ var c = it.count||1; tot+=c; if(state.done[perfKey(cat,it)]) done+=c; }); });
+  return {tot:tot, done:done};
+}
+function perfTotal(){
+  var sum=0;
+  PERF.cats.forEach(function(cat){ var c=perfCatCounts(cat); if(c.tot) sum += cat.weight * c.done / c.tot; });
+  return Math.floor(sum);
+}
+function perfCard(cat, g, items){
+  var tot=0, done=0;
+  g.items.forEach(function(it){ var c=it.count||1; tot+=c; if(state.done[perfKey(cat,it)]) done+=c; });
+  var h = '<div class="bundle'+(done>=tot?' complete':'')+'" style="--rc:var(--accent)">'+
+    '<div class="bundle-h"><span class="room">'+esc(cat.name.toUpperCase())+'</span><h3>'+esc(g.name)+'</h3><span class="cnt">'+done+' / '+tot+'</span>'+
+    (g.note?'<span class="reward">'+esc(g.note)+'</span>':'')+'</div><ul class="bitems">';
+  items.forEach(function(it){
+    var key = perfKey(cat,it), on = !!state.done[key];
+    var tags = '';
+    if(it.when) tags += seasonTag(it.when);
+    if(it.needs) tags += '<span class="tag risk">'+esc(it.needs)+'</span>';
+    h += '<li class="bitem'+(on?' done':'')+'"><input type="checkbox" id="chk-'+esc(key)+'"'+(on?' checked':'')+'>'+
+      '<label class="t" for="chk-'+esc(key)+'">'+icon(it.icon || it.name, 28)+esc(it.name)+'</label><span class="qty">'+((it.count||1)>1?'x'+it.count:'')+'</span>'+
+      (it.how?'<div class="how">'+esc(it.how)+'</div>':'')+
+      (tags?'<div class="meta">'+tags+'</div>':'')+
+    '</li>';
+  });
+  return h + '</ul></div>';
+}
+function renderPerf(){
+  var meter = document.getElementById('pmeter'); if(!meter || !window.PERF) return;
+  var h = '<div class="big"><b>'+perfTotal()+'%</b><span>weighted the way the game weighs it</span></div>';
+  PERF.cats.forEach(function(cat){
+    var c = perfCatCounts(cat), pct = c.tot ? Math.round(c.done/c.tot*100) : 0;
+    h += '<button type="button" class="prow'+(c.tot&&c.done>=c.tot?' full':'')+'" data-cat="'+esc(cat.id)+'" aria-pressed="'+(state.pcat===cat.id?'true':'false')+'"><span class="n">'+icon(cat.icon||'', 28)+esc(cat.name)+'</span><span class="w">'+cat.weight+'% \u00b7 '+c.done+' / '+c.tot+'</span><span class="meter"><i style="width:'+pct+'%"></i></span></button>';
+  });
+  meter.innerHTML = h;
+  meter.querySelectorAll('.prow').forEach(function(b){ b.addEventListener('click', function(){ var id = b.getAttribute('data-cat'); state.pcat = (state.pcat===id) ? 'all' : id; save(); renderPerf(); }); });
+  fillSelect('pcatSel', [{v:'all', l:'All categories'}].concat(PERF.cats.map(function(c){ return {v:c.id, l:c.name+' ('+c.weight+'%)'}; })), state.pcat, function(v){ state.pcat = v; save(); renderPerf(); });
+  fillSelect('pshowSel', [{v:'all', l:'All requirements'},{v:'todo', l:'Not done yet'}], state.pshow, function(v){ state.pshow = v; save(); renderPerf(); });
+  var q = document.getElementById('pq'); if(q.value !== state.pq) q.value = state.pq;
+  var needle = state.pq.trim().toLowerCase();
+  /* the road */
+  var rr = document.getElementById('perfRoute');
+  if(state.pcat==='all' && !needle){
+    var phases = PERF.route.map(function(p){ return {pid:'perf-'+p.n, n:p.n, t:p.t, when:p.when, steps:p.steps}; });
+    var firstOpen = null;
+    phases.forEach(function(ph){ if(firstOpen) return; var c = phaseCounts(ph); if(c.done < c.tot) firstOpen = ph.pid; });
+    rr.innerHTML = phases.map(function(ph){ return phaseBlockHTML(ph, phaseIsOpen(ph, firstOpen), phaseCounts(ph)); }).join('');
+    bindPhaseHeads(rr);
+    bindSteps(rr, function(){ phases.forEach(function(ph){ var el = rr.querySelector('.phase[data-pid="'+ph.pid+'"]'); if(!el) return; var c = phaseCounts(ph); el.querySelector('.cnt').textContent = c.done+'/'+c.tot; el.classList.toggle('complete', c.tot>0 && c.done===c.tot); }); });
+  } else rr.innerHTML = '';
+  /* the requirements */
+  var list = document.getElementById('perfList'); var cards = [], shown = 0, all = 0;
+  PERF.cats.forEach(function(cat){
+    if(state.pcat!=='all' && cat.id!==state.pcat) return;
+    cat.groups.forEach(function(g){
+      var items = g.items.filter(function(it){
+        all++;
+        if(state.pshow==='todo' && state.done[perfKey(cat,it)]) return false;
+        if(needle && (it.name+' '+(it.how||'')+' '+(it.when||'')+' '+(it.needs||'')+' '+g.name+' '+cat.name).toLowerCase().indexOf(needle)===-1) return false;
+        return true;
+      });
+      if(!items.length) return; shown += items.length;
+      cards.push(perfCard(cat, g, items));
+    });
+  });
+  document.getElementById('pcount').textContent = shown+' of '+all+' requirements';
+  list.innerHTML = cards.length ? cards.join('') : '<p class="empty">Nothing matches. Clear the search or change the category.</p>';
+  bindSteps(list, function(){ renderPerf(); });
+}
+document.getElementById('pq').addEventListener('input', function(){ state.pq = this.value; save(); renderPerf(); });
+
+/* ---------- PEOPLE ---------- */
+function pplKey(cid, it){ return 'pp:'+cid+':'+it.id; }
+function pplCard(c){
+  var tot=0, done=0;
+  c.path.forEach(function(it){ tot++; if(state.done[pplKey(c.id,it)]) done++; });
+  var items = c.path.filter(function(it){ return !(state.pplShow==='todo' && state.done[pplKey(c.id,it)]); });
+  var h = '<div class="bundle'+(done>=tot?' complete':'')+'" style="--rc:var(--'+(c.kind==='Bachelor'?'p1':c.kind==='Bachelorette'?'p2':'accent')+')">'+
+    '<div class="bundle-h'+(ART.map[c.name]?' withpic':'')+'">'+(ART.map[c.name]?'<span class="pic">'+icon(c.name, 64)+'</span>':'')+'<span class="room">'+esc((c.kind||'').toUpperCase())+(c.birthday?' \u00b7 BIRTHDAY '+esc(c.birthday.toUpperCase()):'')+'</span><h3>'+esc(c.name)+'</h3><span class="cnt">'+done+' / '+tot+'</span>'+
+    (c.lives?'<span class="reward">'+esc(c.lives)+(c.find?' \u00b7 '+esc(c.find):'')+'</span>':'')+'</div>';
+  if(c.loves || c.likes || c.hates){
+    h += '<div class="bio">'+(c.cheap?'<span><b>Easy love:</b> '+esc(c.cheap)+'</span>':'')+(c.loves?'<span><b>Loves:</b> '+esc(c.loves)+'</span>':'')+(c.likes?'<span><b>Likes:</b> '+esc(c.likes)+'</span>':'')+(c.hates?'<span><b>Never:</b> '+esc(c.hates)+'</span>':'')+'</div>';
+  }
+  h += '<ul class="bitems">';
+  items.forEach(function(it){
+    var key = pplKey(c.id,it), on = !!state.done[key];
+    h += '<li class="bitem'+(on?' done':'')+'"><input type="checkbox" id="chk-'+esc(key)+'"'+(on?' checked':'')+'>'+
+      '<label class="t" for="chk-'+esc(key)+'">'+esc(it.t)+'</label><span class="hearts">'+(it.hearts!=null?esc(String(it.hearts))+'\u2665':'')+'</span>'+
+      (it.how?'<div class="how">'+esc(it.how)+'</div>':'')+
+      (it.w?'<div class="note">'+esc(it.w)+'</div>':'')+
+    '</li>';
+  });
+  if(!items.length) h += '<li class="bitem"><span></span><span class="how">All done.</span></li>';
+  return h + '</ul>'+(c.note?'<div class="rmnote">'+esc(c.note)+'</div>':'')+'</div>';
+}
+function renderPeople(){
+  var list = document.getElementById('peopleList'); if(!list || !window.PEOPLE) return;
+  var opts = [{v:'all', l:'Everyone'},{v:'Bachelorette', l:'Bachelorettes'},{v:'Bachelor', l:'Bachelors'},{v:'Other', l:'Other villagers and the rules'}].concat(PEOPLE.cards.filter(function(c){ return c.kind!=='Other'; }).map(function(c){ return {v:c.id, l:c.name}; }));
+  if(!opts.some(function(o){ return o.v===state.ppl; })) state.ppl = 'all';
+  fillSelect('pplSel', opts, state.ppl, function(v){ state.ppl = v; save(); renderPeople(); });
+  fillSelect('pplShowSel', [{v:'all', l:'All steps'},{v:'todo', l:'Not done yet'}], state.pplShow, function(v){ state.pplShow = v; save(); renderPeople(); });
+  var cards = PEOPLE.cards.filter(function(c){
+    if(state.ppl==='all') return true;
+    if(state.ppl==='Other') return c.kind==='Other';
+    if(state.ppl==='Bachelor' || state.ppl==='Bachelorette') return c.kind===state.ppl;
+    return c.id===state.ppl;
+  });
+  list.innerHTML = cards.length ? cards.map(pplCard).join('') : '<p class="empty">Nothing to show.</p>';
+  bindSteps(list, function(){ renderPeople(); });
+}
+
 /* ---------- LEGEND ---------- */
 function tableHTML(t){
   var h = '<div class="tbl"><table><thead><tr>'+t.cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>';
   t.rows.forEach(function(r){
-    h += '<tr>'+r.map(function(c, i){ var num = (t.num||[]).indexOf(i)>-1; return '<td data-label="'+esc(t.cols[i]||'')+'"'+(num?' class="num"':'')+'>'+esc(c)+'</td>'; }).join('')+'</tr>';
+    h += '<tr>'+r.map(function(c, i){ var num = (t.num||[]).indexOf(i)>-1; var ic = (i===0) ? icon(String(c).replace(/\s+\d+g$/,'').replace(/\s*\(.*\)$/,''), 24) : ''; return '<td data-label="'+esc(t.cols[i]||'')+'"'+(num?' class="num"':'')+'>'+ic+esc(c)+'</td>'; }).join('')+'</tr>';
   });
   return h + '</tbody></table></div>';
 }
@@ -521,7 +657,7 @@ function itemCard(b){
   }
   return '<div class="bcard'+(b.guess?' guess':'')+'" style="--ec:'+(ICAT_COLOR[b.cat]||'var(--ink-2)')+'">'+
     '<h3>'+esc(b.name)+'</h3>'+
-    (b.w ? '<div class="fp">'+footprintSVG(b.w, b.h)+'<span class="sz">'+b.w+' × '+b.h+' <small>tiles</small></span></div>' : '')+
+    ((b.w || icon(b.name)) ? '<div class="fp">'+icon(b.name, 48)+(b.w ? footprintSVG(b.w, b.h)+'<span class="sz">'+b.w+' × '+b.h+' <small>tiles</small></span>' : '')+'</div>' : '')+
     '<div class="era">'+esc((b.cat||'').toUpperCase())+'<span>'+esc(b.from||'')+(b.v16==='changed'?' · changed in 1.6':b.v16?' · new in 1.6':'')+'</span></div>'+
     (b.use ? '<div class="use">'+esc(b.use)+'</div>' : '')+
     (cost ? '<div class="mats">'+esc(cost)+'</div>' : '')+
@@ -553,7 +689,7 @@ function renderItems(){
 document.getElementById('iq').addEventListener('input', function(){ state.iQ = this.value; save(); renderItems(); });
 
 /* ---------- BOOT ---------- */
-function renderAll(){ renderViews(); renderSetup(); renderBrief(); renderFocus(); renderRoute(); renderNav(); renderFinish(); renderNotes(); renderBundles(); renderLegend(); renderItems(); }
+function renderAll(){ renderViews(); renderSetup(); renderBrief(); renderFocus(); renderRoute(); renderNav(); renderFinish(); renderNotes(); renderBundles(); renderPerf(); renderPeople(); renderLegend(); renderItems(); }
 document.getElementById('copyBtn').addEventListener('click', function(){
   var txt = routeText();
   if(navigator.clipboard && navigator.clipboard.writeText){
