@@ -45,7 +45,7 @@ var SEASONS = [
    {id:'sp2m',t:'Fishing level 2: Fiberglass Rod and a stack of bait.',c:'Fiberglass Rod: 1,800g; Bait: 5g each',w:'Bait halves the wait per bite, which is twice the fish per day. Bug Meat from the mines makes bait too (1 makes 5).',tags:['fish','shop','money'],p:2},
    {id:'sp2n',t:'Cook nothing yet; eat Salmonberries and Spring Onions (Cindersap Forest, south) in the mines.',w:'Spring Onions are free energy in the south of the forest. Salmonberry season is Spring 15 to 18.',tags:['forage'],p:2}
   ]},
-  {n:'3',t:'Egg Festival, Spring 13',when:'day 13, 9am to 2pm',steps:[
+  {n:'3',t:'Egg Festival, Spring 13',when:'day 13',steps:[
    {id:'sp3a',t:'Both players into the town square between 9am and 2pm. It starts when everyone is there.',w:'Festivals are shared: the host starts it once every player is in the square. The day ends when it ends.',tags:['festival'],p:0},
    {id:'sp3b',t:'Buy Strawberry Seeds from Pierre’s stall: every gold above 500g. Till the tiles for them before 9am.',c:'Strawberry Seeds: 100g each',w:'Sold today only until next year. Planted tonight they fruit on Spring 21 and 25 at 120g each: 240g back on every 100g seed; the 20 tiles with Speed-Gro fruit a third time on Spring 28.',tags:['shop','money','deadline'],p:1,risk:'today only'},
    {id:'sp3c',t:'Egg hunt at the end if you want the Straw Hat: 6 eggs wins with two players.',w:'Nothing in it feeds the Community Center.',tags:['festival'],p:0},
@@ -174,7 +174,7 @@ var SEASONS = [
    {id:'wi2c',t:'Fodder bundle: 10 Wheat, 10 Hay, 3 Apples.',c:'Hay: 50g each at Marnie’s',w:'Reward: a Heater. Hay comes out of the silo through the hopper too.',tags:['bundle'],p:1},
    {id:'wi2d',t:'Cook the Fried Egg and the Maki Roll on a Cookout Kit if the Chef’s bundle is still open.',c:'Cookout Kit: 15 Wood, 10 Fiber, 3 Coal; Maki Roll recipe: 300g at the Saloon',w:'Maki Roll: any fish, Seaweed, Rice. Fried Egg: one Egg. The kit vanishes overnight, so cook both the same day.',tags:['bundle'],p:1}
   ]},
-  {n:'3',t:'Night Market, Winter 15 to 17',when:'days 15 to 17, 5pm to 2am',steps:[
+  {n:'3',t:'Night Market, Winter 15 to 17',when:'days 15 to 17',steps:[
    {id:'wi3a',t:'Beach after 5pm: the Traveling Cart is at the market all three nights. Check it for every missing bundle item.',w:'Same random stock rules as the forest cart, three nights running. It is the last shop of the year for Rabbit’s Foot, Truffle, Red Cabbage Seeds and Nautilus Shell.',tags:['shop','bundle'],p:1},
    {id:'wi3b',t:'Submarine (1,000g) only if your fish bundle is the remixed Master Fisher’s: Blobfish is one catch in ten.',c:'Submarine: 1,000g a ride',w:'Standard bundles never need it. Board between 5pm and 11pm, fish until 2am.',tags:['fish','bundle'],p:2,set:'remix'},
    {id:'wi3c',t:'Bulletin Board: hand in Chef’s, Dye, Field Research, Fodder and Enchanter’s.',w:'The board done gives two hearts with every non-datable villager you have met, overnight.',tags:['bundle'],p:0}

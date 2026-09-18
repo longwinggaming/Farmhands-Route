@@ -258,10 +258,10 @@ function refreshPhaseCounts(){
 }
 function renderNext(){
   var el = document.getElementById('seasonnext'); var i = seasonIndex();
-  el.innerHTML = '<button type="button" id="seasonPrev"'+(i===0?' disabled':'')+'>← '+(i>0?esc(SEASONS[i-1].name):'')+'</button>'+
-    '<button type="button" id="seasonNext"'+(i===SEASONS.length-1?' disabled':'')+'>'+(i<SEASONS.length-1?esc(SEASONS[i+1].name):'')+' →</button>';
-  document.getElementById('seasonPrev').addEventListener('click', function(){ if(i>0) gotoSeason(SEASONS[i-1].id); });
-  document.getElementById('seasonNext').addEventListener('click', function(){ if(i<SEASONS.length-1) gotoSeason(SEASONS[i+1].id); });
+  el.innerHTML = '<button type="button" id="seasonPrevBtn"'+(i===0?' disabled':'')+'>← '+(i>0?esc(SEASONS[i-1].name):'')+'</button>'+
+    '<button type="button" id="seasonNextBtn"'+(i===SEASONS.length-1?' disabled':'')+'>'+(i<SEASONS.length-1?esc(SEASONS[i+1].name):'')+' →</button>';
+  document.getElementById('seasonPrevBtn').addEventListener('click', function(){ if(i>0) gotoSeason(SEASONS[i-1].id); });
+  document.getElementById('seasonNextBtn').addEventListener('click', function(){ if(i<SEASONS.length-1) gotoSeason(SEASONS[i+1].id); });
 }
 function gotoSeason(id){
   state.season = id; save(); renderRoute(); renderNav();
@@ -362,7 +362,7 @@ function roomProgress(room){
 function seasonTag(s){
   var k = String(s||'').toLowerCase();
   var cls = k.indexOf('spring')>-1&&k.indexOf(',')===-1 ? 'spring' : k==='summer' ? 'summer' : k==='fall' ? 'fall' : k==='winter' ? 'winter' : '';
-  return '<span class="tag '+cls+'">'+esc(s||'any season')+'</span>';
+  return '<span class="tag stag '+cls+'">'+esc(s||'any season')+'</span>';
 }
 function bundleCard(b){
   var room = ROOMS.filter(function(r){ return r.id===b.room; })[0] || {name:b.room};
@@ -378,12 +378,11 @@ function bundleCard(b){
     var tags = seasonTag(it.season);
     if(it.cat) tags += '<span class="tag">'+esc(it.cat)+'</span>';
     if(it.q) tags += '<span class="tag">'+esc(it.q)+'</span>';
-    if(it.risk) tags += '<span class="tag risk">one-shot</span>';
+    if(it.risk) tags += '<span class="tag risk">'+esc(it.risk)+'</span>';
     h += '<li class="bitem'+(done?' done':'')+'"><input type="checkbox" id="chk-'+esc(key)+'"'+(done?' checked':'')+'>'+
       '<label class="t" for="chk-'+esc(key)+'">'+esc(it.name)+'</label><span class="qty">'+(it.qty>1?'x'+it.qty:'')+'</span>'+
       '<div class="how">'+esc(it.how)+(when.length?' · '+esc(when.join(', ')):'')+'</div>'+
       '<div class="meta">'+tags+'</div>'+
-      (it.risk ? '<div class="note">'+esc(it.risk)+'</div>' : '')+
     '</li>';
   });
   h += '</ul>'+(b.note?'<div class="rmnote">'+esc(b.note)+'</div>':'')+'</div>';
@@ -523,7 +522,7 @@ function itemCard(b){
   return '<div class="bcard'+(b.guess?' guess':'')+'" style="--ec:'+(ICAT_COLOR[b.cat]||'var(--ink-2)')+'">'+
     '<h3>'+esc(b.name)+'</h3>'+
     (b.w ? '<div class="fp">'+footprintSVG(b.w, b.h)+'<span class="sz">'+b.w+' × '+b.h+' <small>tiles</small></span></div>' : '')+
-    '<div class="era">'+esc((b.cat||'').toUpperCase())+'<span>'+esc(b.from||'')+(b.v16?' · new in 1.6':'')+'</span></div>'+
+    '<div class="era">'+esc((b.cat||'').toUpperCase())+'<span>'+esc(b.from||'')+(b.v16==='changed'?' · changed in 1.6':b.v16?' · new in 1.6':'')+'</span></div>'+
     (b.use ? '<div class="use">'+esc(b.use)+'</div>' : '')+
     (cost ? '<div class="mats">'+esc(cost)+'</div>' : '')+
     '<div class="facts">'+facts.map(function(f){return '<span>'+esc(f)+'</span>';}).join('')+'</div>'+
