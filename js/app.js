@@ -567,8 +567,7 @@ function pplCard(c){
     var key = pplKey(c.id,it), on = !!state.done[key];
     h += '<li class="bitem'+(on?' done':'')+'"><input type="checkbox" id="chk-'+esc(key)+'"'+(on?' checked':'')+'>'+
       '<label class="t" for="chk-'+esc(key)+'">'+esc(it.t)+'</label><span class="hearts">'+(it.hearts!=null?esc(String(it.hearts))+'\u2665':'')+'</span>'+
-      (it.how?'<div class="how">'+esc(it.how)+'</div>':'')+
-      (it.w?'<div class="note">'+esc(it.w)+'</div>':'')+
+      (it.how?'<div class="how">'+esc(it.how)+(it.w?' · Pick: '+esc(it.w):'')+'</div>':'')+
     '</li>';
   });
   if(!items.length) h += '<li class="bitem"><span></span><span class="how">All done.</span></li>';

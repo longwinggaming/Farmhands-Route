@@ -17,7 +17,7 @@ Object.keys(ctx.ITEM_INFO||{}).forEach(add);
   if(['crop','fish','item','animal','gear','thing','machine','crop (base)','sapling'].indexOf(first)>-1) b.table.rows.forEach(function(r){ add(String(r[0]).replace(/\s+\d+g$/,'').replace(/\s*\(.*\)$/,'')); });
 }); });
 Object.keys(ctx.ENGINES||{}).forEach(function(k){ (ctx.ENGINES[k].ladder||[]).forEach(function(r){ add(r.name.replace(/\s*\(.*\)$/,'')); }); });
-if(ctx.PERF){ ctx.PERF.cats.forEach(function(c){ c.groups.forEach(function(g){ g.items.forEach(function(it){ if(it.icon!==false){ if(c.id==='friends') portraits[it.name] = true; else add(it.icon || it.name); } }); }); }); }
-if(ctx.PEOPLE){ ctx.PEOPLE.cards.forEach(function(c){ if(c.kind!=='Other') portraits[c.name] = true; (c.path||[]).forEach(function(p){ if(p.portrait) portraits[p.portrait] = true; }); }); }
+if(ctx.PERF){ ctx.PERF.cats.forEach(function(c){ c.groups.forEach(function(g){ g.items.forEach(function(it){ if(it.icon!==false){ if(c.id==='friends') portraits[it.icon||it.name] = true; else add(it.icon || it.name); } }); }); }); }
+if(ctx.PEOPLE){ ctx.PEOPLE.cards.forEach(function(c){ if(c.id!=='marriage' && c.name.indexOf(' and ')===-1) portraits[c.name] = true; }); }
 ['Golden Walnut','Stardrop','Gold Clock','Earth Obelisk','Water Obelisk','Desert Obelisk','Island Obelisk','Junimo Hut','Prismatic Shard','Bouquet','Mermaid’s Pendant','Wedding Ring','Qi Gem'].forEach(add);
 process.stdout.write(JSON.stringify({items:Object.keys(items).sort(), portraits:Object.keys(portraits).sort()}, null, 1));

@@ -14,7 +14,7 @@ ITEM = 48; PORTRAIT = 64
 
 # names whose wiki file differs from the display name
 ALIAS = {
- 'Large Brown Egg': ['Large Egg (brown)', 'Large Brown Egg'],
+ 'Large Brown Egg': ['Large Brown Egg', 'Large Egg (brown)'], 'Egg (brown)': ['Brown Egg', 'Egg (brown)'], 'Egg (white)': ['Egg'], 'Large Egg (brown)': ['Large Brown Egg', 'Large Egg (brown)'], 'Large Egg (white)': ['Large Egg'],
  'Ancient Seed': ['Ancient Seed'],
  'Ancient Seed (artifact)': ['Ancient Seed'],
  'Warp Totem: Beach': ['Warp Totem Beach'], 'Warp Totem: Mountains': ['Warp Totem Mountains'], 'Warp Totem: Farm': ['Warp Totem Farm'],
@@ -83,6 +83,8 @@ def resolve(names, width, kind):
     for n in names:
         opts = ALIAS.get(n, [n]) if n in ALIAS else [n]
         if n in ALIAS and not opts: continue
+        base = re.sub(r'\s*\((any|white|brown)\)$', '', n)
+        if base != n and n not in ALIAS: opts = opts + [base, n.replace(' (brown)', '').replace('Large Egg', 'Large Brown Egg').replace('Egg (', 'Brown Egg (')]
         cand[n] = opts
     titles = sorted(set(t for opts in cand.values() for t in opts))
     found = lookup(titles, width)
