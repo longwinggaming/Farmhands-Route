@@ -409,6 +409,37 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
 .notes li{margin-block:2px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.on{opacity:1}
+/* up next: the next unticked steps of the season, tickable in place */
+.upnext{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--accent);box-shadow:var(--shadow);--ec:var(--accent)}
+.un-h{display:flex;align-items:baseline;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.un-h h2{font-family:var(--display);font-size:20px;letter-spacing:.06em;line-height:1;color:var(--accent)}
+.un-h h2 small{font-family:var(--body);font-size:13px;letter-spacing:0;color:var(--ink-2);margin-left:10px}
+.un-h .cnt{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-2);white-space:nowrap}
+.upnext .un-done{padding:14px 16px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.upnext .un-done button{border:1px solid var(--line);background:var(--surface-2);padding:6px 12px;border-radius:999px;cursor:pointer;font-size:14px;color:var(--ink)}
+.upnext .where{border:0;background:transparent;padding:0;font-family:var(--mono);font-size:12px;color:var(--ink-2);cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.upnext .where:hover{color:var(--ink)}
+/* player chip inline with the step text */
+.pchip{display:inline-block;font-family:var(--display);font-size:12px;letter-spacing:.08em;line-height:1;padding:3px 5px 2px;border-radius:3px;margin-right:7px;vertical-align:2px;border:1px solid currentColor}
+.pchip.p1{color:var(--p1)}.pchip.p2{color:var(--p2)}
+body:not(.coop-on) .pchip{display:none}
+/* folding cards: the header is the button */
+.bundle-h.fold{cursor:pointer;user-select:none;grid-template-columns:1fr auto auto}
+.bundle-h.fold .chev{grid-column:3;grid-row:1/3;align-self:center;color:var(--ink-2);font-size:14px}
+.bundle-h.fold .chev::before{content:'\25BE'}
+.bundle.closed .bundle-h.fold .chev::before{content:'\25B8'}
+.bundle.closed .bitems,.bundle.closed .bio,.bundle.closed .rmnote{display:none}
+.bundle-h.fold.withpic{grid-template-columns:auto 1fr auto auto}
+.bundle-h.fold.withpic .cnt{grid-column:3}
+.bundle-h.fold.withpic .chev{grid-column:4}
+/* room tiles filter the list */
+.roomnav div[role=button]{cursor:pointer}
+.roomnav div[aria-pressed="true"]{outline:2px solid var(--rc);outline-offset:-2px}
+@media (max-width:600px){
+  .callout{margin-top:14px;padding:10px 12px;gap:3px}.callout h2{font-size:17px}.callout-line{font-size:14px}
+  .roomnav div{padding:6px 8px}.roomnav .rw{display:none}
+  .upnext{margin-top:14px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{
   body{background:#fff;color:#000;padding-inline:0}
@@ -456,6 +487,8 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
   </ul>
   </div>
 </section>
+
+<section class="upnext" id="upnext" aria-label="Up next"></section>
 
 <div class="setup-sum" id="setupSum"></div>
 
@@ -574,11 +607,11 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/data.js?v=10"></script>
-<script src="js/bundles.js?v=10"></script>
-<script src="js/legend.js?v=10"></script>
-<script src="js/items.js?v=10"></script>
-<script src="js/perfection.js?v=10"></script>
-<script src="js/people.js?v=10"></script>
-<script src="js/art.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/data.js?v=11"></script>
+<script src="js/bundles.js?v=11"></script>
+<script src="js/legend.js?v=11"></script>
+<script src="js/items.js?v=11"></script>
+<script src="js/perfection.js?v=11"></script>
+<script src="js/people.js?v=11"></script>
+<script src="js/art.js?v=11"></script>
+<script src="js/app.js?v=11"></script>

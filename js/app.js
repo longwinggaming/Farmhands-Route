@@ -5,8 +5,8 @@
 /* ---------- STATE ---------- */
 var KEY = 'farmhand-route:v1';
 var VIEWS = ['route','bundles','focus','perf','people','legend','items'];
-var state = {view:'route', pro:true, season:'spring', setupOpen:true, briefOpen:false, coop:true, who:'both', set:'std', engines:['berries'],
-  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:'', pcat:'all', pshow:'all', pq:'', ppl:'all', pplShow:'all', lq:''};
+var state = {view:'route', pro:true, season:'spring', setupOpen:false, briefOpen:false, coop:true, who:'both', set:'std', engines:['berries'],
+  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:'', pcat:'all', pshow:'all', pq:'', ppl:'all', pplShow:'all', lq:'', cardOpen:{}};
 try{
   var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
   if(saved && typeof saved === 'object'){
@@ -33,6 +33,7 @@ try{
     if(typeof saved.pq==='string') state.pq = saved.pq;
     if(typeof saved.ppl==='string') state.ppl = saved.ppl;
     if(typeof saved.lq==='string') state.lq = saved.lq;
+    if(saved.cardOpen && typeof saved.cardOpen==='object') state.cardOpen = saved.cardOpen;
     if(['all','todo'].indexOf(saved.pplShow)>-1) state.pplShow = saved.pplShow;
   }
 }catch(e){}
@@ -175,19 +176,25 @@ function renderBrief(){
 
 /* ---------- STEPS ---------- */
 var TAG_LABEL = {money:'money', bundle:'bundle', deadline:'deadline', farm:'farm', fish:'fish', mine:'mine', forage:'forage', animals:'animals', shop:'shop', festival:'festival', craft:'craft', social:'social', prep:'prep'};
+function pchip(p){ return p ? '<b class="pchip p'+p+'">P'+p+'</b>' : ''; }
+/* the phase label already carries the days in most titles; only show a when that adds something */
+function whenHTML(ph){
+  var w = String(ph.when||''); if(!w) return '';
+  if(String(ph.t||'').indexOf(w.replace(/^days?\s+/,''))>-1) return '';
+  return '<span class="when">'+esc(w)+'</span>';
+}
 function stepHTML(st){
   var done = !!state.done[st.id];
   var p = st.p|0;
   var cls = 'step'+(done?' done':'')+(p?' p'+p:'');
   var tags = '';
-  if(p) tags += '<span class="tag p'+p+'">P'+p+'</span>';
   (st.tags||[]).forEach(function(tg){ tags += '<span class="tag '+esc(tg)+'">'+esc(TAG_LABEL[tg]||tg)+'</span>'; });
   if(st.set==='std' && state.set==='remix') tags += '<span class="tag std">standard set</span>';
   if(st.set==='remix') tags += '<span class="tag std">remixed set</span>';
   if(st.risk) tags += '<span class="tag risk">'+esc(st.risk)+'</span>';
   return '<li class="'+cls+'" data-id="'+esc(st.id)+'">'+
     '<input type="checkbox" id="chk-'+esc(st.id)+'"'+(done?' checked':'')+'>'+
-    '<label class="t" for="chk-'+esc(st.id)+'">'+esc(st.t)+'</label>'+
+    '<label class="t" for="chk-'+esc(st.id)+'">'+pchip(p)+esc(st.t)+'</label>'+
     '<span class="cost">'+esc(st.c||'')+'</span>'+
     '<div class="meta">'+tags+'</div>'+
     (st.w ? '<details class="why"><summary>Why</summary><p>'+esc(st.w)+'</p></details>' : '')+
@@ -228,7 +235,7 @@ function renderRoute(){
     var c = phaseCounts(ph), open = phaseIsOpen(ph, firstOpen);
     var head;
     if(ph.kind==='base'){
-      head = '<span class="num">'+esc(ph.n)+'</span><h3>'+esc(ph.t)+'</h3><span class="when">'+esc(ph.when)+'</span>';
+      head = '<span class="num">'+esc(ph.n)+'</span><h3>'+esc(ph.t)+'</h3>'+whenHTML(ph);
     } else {
       head = '<span class="kind">'+esc(ph.label)+'</span><h3>'+esc(ph.t)+'</h3>';
     }
@@ -246,8 +253,9 @@ function renderRoute(){
   sec.innerHTML = h;
   root.appendChild(sec);
   bindPhaseHeads(root);
-  bindSteps(root, function(){ renderNav(); refreshPhaseCounts(); });
+  bindSteps(root, function(){ renderNav(); refreshPhaseCounts(); renderUpNext(); renderFocus(); });
   renderNext();
+  renderUpNext();
 }
 function bindPhaseHeads(root){
   root.querySelectorAll('.phase-h').forEach(function(hd){
@@ -262,7 +270,7 @@ function bindPhaseHeads(root){
   });
 }
 function phaseBlockHTML(ph, open, c){
-  var head = '<span class="num">'+esc(ph.n)+'</span><h3>'+esc(ph.t)+'</h3><span class="when">'+esc(ph.when)+'</span><span class="cnt">'+c.done+'/'+c.tot+'</span>';
+  var head = '<span class="num">'+esc(ph.n)+'</span><h3>'+esc(ph.t)+'</h3>'+whenHTML(ph)+'<span class="cnt">'+c.done+'/'+c.tot+'</span>';
   return '<div class="phase'+(open?'':' closed')+(c.tot && c.done===c.tot?' complete':'')+'" data-pid="'+esc(ph.pid)+'"><div class="phase-h" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+head+'</div><ul class="steps">'+ph.steps.filter(stepVisible).map(stepHTML).join('')+'</ul></div>';
 }
 function refreshPhaseCounts(){
@@ -284,6 +292,57 @@ function renderNext(){
 function gotoSeason(id){
   state.season = id; save(); renderRoute(); renderNav();
   document.getElementById('route').scrollIntoView({block:'start'});
+}
+
+/* ---------- UP NEXT ---------- */
+/* the first unticked visible steps of the season, in route order */
+function nextSteps(season, n){
+  var out = [];
+  allPhases(season).forEach(function(ph){
+    ph.steps.forEach(function(st){ if(out.length < n && stepVisible(st) && !state.done[st.id]) out.push({st:st, ph:ph}); });
+  });
+  return out;
+}
+function upNextRow(st, ph){
+  var p = st.p|0;
+  return '<li class="step'+(p?' p'+p:'')+'" data-id="'+esc(st.id)+'">'+
+    '<input type="checkbox" id="nx-'+esc(st.id)+'">'+
+    '<label class="t" for="nx-'+esc(st.id)+'">'+pchip(p)+esc(st.t)+'</label>'+
+    '<span class="cost">'+esc(st.c||'')+'</span>'+
+    '<div class="meta"><button type="button" class="where" data-pid="'+esc(ph.pid)+'">'+esc(ph.kind==='base' ? ph.t : ph.label+' · '+ph.t)+'</button>'+(st.risk?'<span class="tag risk">'+esc(st.risk)+'</span>':'')+'</div>'+
+  '</li>';
+}
+function renderUpNext(){
+  var el = document.getElementById('upnext'); if(!el) return;
+  var season = currentSeason(), pr = seasonProgress(season), items = nextSteps(season, 3), i = seasonIndex();
+  var who = (state.coop && state.who!=='both') ? ' · '+(state.who==='p1' ? 'Player 1' : 'Player 2') : '';
+  var h = '<div class="un-h"><h2>UP NEXT<small>'+esc(season.name+who)+'</small></h2><span class="cnt">'+pr.done+' / '+pr.tot+'</span></div>';
+  if(items.length){
+    h += '<ul class="steps">'+items.map(function(x){ return upNextRow(x.st, x.ph); }).join('')+'</ul>';
+  } else {
+    h += '<div class="un-done"><span>'+esc(season.name)+' is done.</span>'+(i<SEASONS.length-1 ? '<button type="button" id="unNext">'+esc(SEASONS[i+1].name)+' →</button>' : '<span>The year is complete.</span>')+'</div>';
+  }
+  el.innerHTML = h;
+  el.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      var id = cb.id.replace('nx-','');
+      if(cb.checked) state.done[id] = true; else delete state.done[id];
+      save();
+      var rc = document.querySelector('#route [id="chk-'+id+'"]');
+      if(rc){ rc.checked = cb.checked; var li = rc.closest('.step'); if(li) li.classList.toggle('done', cb.checked); }
+      refreshPhaseCounts(); renderNav(); renderFocus(); renderUpNext();
+    });
+  });
+  el.querySelectorAll('.where').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pid = b.getAttribute('data-pid'); var ph = document.querySelector('#route .phase[data-pid="'+pid+'"]'); if(!ph) return;
+      state.phaseOpen[pid] = true; save();
+      ph.classList.remove('closed'); ph.querySelector('.phase-h').setAttribute('aria-expanded', 'true');
+      ph.scrollIntoView({block:'start', behavior:'smooth'});
+    });
+  });
+  var nb = document.getElementById('unNext');
+  if(nb) nb.addEventListener('click', function(){ gotoSeason(SEASONS[i+1].id); el.scrollIntoView({block:'start'}); });
 }
 
 /* ---------- NAV + FINISH + NOTES ---------- */
@@ -366,6 +425,23 @@ document.querySelectorAll('#views button[data-view]').forEach(function(b){
 });
 document.getElementById('proBtn').addEventListener('click', function(){ state.pro = !state.pro; save(); renderViews(); toast(state.pro ? 'Pro mode: explanations hidden' : 'Explanations shown'); });
 
+/* ---------- FOLDING CARDS ---------- */
+/* a filtered list (one room, one person, a search) shows its cards open; the full list folds them unless opened by hand */
+function cardIsOpen(id, forced){ return forced ? true : state.cardOpen[id]===true; }
+function foldAttrs(open){ return ' role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'"'; }
+function bindFolds(root){
+  root.querySelectorAll('.bundle-h.fold').forEach(function(hd){
+    var go = function(){
+      var card = hd.parentNode, id = card.getAttribute('data-card');
+      var open = card.classList.contains('closed');
+      state.cardOpen[id] = open; save();
+      card.classList.toggle('closed', !open); hd.setAttribute('aria-expanded', String(open));
+    };
+    hd.addEventListener('click', go);
+    hd.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); go(); } });
+  });
+}
+
 /* ---------- BUNDLES ---------- */
 function bundleItemKey(b, it){ return 'b:'+b.id+':'+it.id; }
 function bundleCounts(b){
@@ -385,11 +461,11 @@ function seasonTag(s){
   var cls = k.indexOf('spring')>-1&&k.indexOf(',')===-1 ? 'spring' : k==='summer' ? 'summer' : k==='fall' ? 'fall' : k==='winter' ? 'winter' : '';
   return '<span class="tag stag '+cls+'">'+esc(s||'any season')+'</span>';
 }
-function bundleCard(b){
+function bundleCard(b, dflt){
   var room = ROOMS.filter(function(r){ return r.id===b.room; })[0] || {name:b.room};
-  var c = bundleCounts(b);
-  var h = '<div class="bundle'+(c.complete?' complete':'')+'" style="--rc:var(--r-'+esc(b.room)+')" id="bundle-'+esc(b.id)+'">'+
-    '<div class="bundle-h"><span class="room">'+esc(room.name.toUpperCase())+(b.set==='remix'?' · REMIXED':'')+'</span><h3>'+esc(b.name)+'</h3><span class="cnt">'+c.done+' / '+c.need+(c.tot>c.need?' of '+c.tot:'')+'</span>'+
+  var c = bundleCounts(b), open = cardIsOpen('b:'+b.id, dflt);
+  var h = '<div class="bundle'+(c.complete?' complete':'')+(open?'':' closed')+'" style="--rc:var(--r-'+esc(b.room)+')" id="bundle-'+esc(b.id)+'" data-card="b:'+esc(b.id)+'">'+
+    '<div class="bundle-h fold"'+foldAttrs(open)+'><span class="room">'+esc(room.name.toUpperCase())+(b.set==='remix'?' · REMIXED':'')+'</span><h3>'+esc(b.name)+'</h3><span class="cnt">'+c.done+' / '+c.need+(c.tot>c.need?' of '+c.tot:'')+'</span><span class="chev" aria-hidden="true"></span>'+
     '<span class="reward">Reward: <b>'+esc(b.reward)+'</b>'+(b.slot?' · '+esc(b.slot):'')+'</span></div><ul class="bitems">';
   b.items.forEach(function(it){
     var key = bundleItemKey(b,it), done = !!state.done[key];
@@ -417,8 +493,13 @@ function renderBundles(){
   var nav = document.getElementById('roomnav');
   nav.innerHTML = ROOMS.map(function(r){
     var pr = roomProgress(r);
-    return '<div style="--rc:var(--r-'+esc(r.id)+')"><span class="n">'+esc(r.name.toUpperCase())+'</span><span class="p">'+pr.done+' / '+pr.tot+' bundles</span><span class="meter"><i style="width:'+(pr.tot?Math.round(pr.done/pr.tot*100):0)+'%"></i></span><span class="rw">'+esc(r.reward)+'</span></div>';
+    return '<div role="button" tabindex="0" data-room="'+esc(r.id)+'" aria-pressed="'+(state.room===r.id?'true':'false')+'" style="--rc:var(--r-'+esc(r.id)+')"><span class="n">'+esc(r.name.toUpperCase())+'</span><span class="p">'+pr.done+' / '+pr.tot+' bundles</span><span class="meter"><i style="width:'+(pr.tot?Math.round(pr.done/pr.tot*100):0)+'%"></i></span><span class="rw">'+esc(r.reward)+'</span></div>';
   }).join('');
+  nav.querySelectorAll('[data-room]').forEach(function(t){
+    var go = function(){ var id = t.getAttribute('data-room'); state.room = (state.room===id) ? 'all' : id; save(); renderBundles(); };
+    t.addEventListener('click', go);
+    t.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); go(); } });
+  });
   var rows = bundlesInSet().filter(function(b){
     if(state.room!=='all' && b.room!==state.room) return false;
     if(state.bshow==='todo' && bundleCounts(b).complete) return false;
@@ -427,8 +508,10 @@ function renderBundles(){
   });
   var all = bundlesInSet();
   document.getElementById('bundleCount').textContent = rows.length + ' of ' + all.length + ' bundles · ' + all.filter(function(b){ return bundleCounts(b).complete; }).length + ' done';
-  list.innerHTML = rows.length ? rows.map(bundleCard).join('') : '<p class="empty">Nothing matches. Change the room or the filter.</p>';
+  var dflt = state.room!=='all';
+  list.innerHTML = rows.length ? rows.map(function(b){ return bundleCard(b, dflt); }).join('') : '<p class="empty">Nothing matches. Change the room or the filter.</p>';
   bindSteps(list, function(){ renderBundles(); });
+  bindFolds(list);
 }
 
 /* ---------- FOCUS ---------- */
@@ -473,7 +556,7 @@ function renderFocus(){
   });
   if(!h) h = '<p class="empty">Nothing picked. Choose an engine above.</p>';
   el.innerHTML = h;
-  bindSteps(el, function(){ renderNav(); });
+  bindSteps(el, function(){ renderNav(); renderRoute(); });
 }
 
 /* ---------- PERFECTION ---------- */
@@ -488,11 +571,12 @@ function perfTotal(){
   PERF.cats.forEach(function(cat){ var c=perfCatCounts(cat); if(c.tot) sum += cat.weight * c.done / c.tot; });
   return Math.floor(sum);
 }
-function perfCard(cat, g, items){
+function perfCard(cat, g, items, dflt){
   var tot=0, done=0;
   g.items.forEach(function(it){ var c=it.count||1; tot+=c; if(state.done[perfKey(cat,it)]) done+=c; });
-  var h = '<div class="bundle'+(done>=tot?' complete':'')+'" style="--rc:var(--accent)">'+
-    '<div class="bundle-h"><span class="room">'+esc(cat.name.toUpperCase())+'</span><h3>'+esc(g.name)+'</h3><span class="cnt">'+done+' / '+tot+'</span>'+
+  var cid = 'pf:'+cat.id+':'+g.name, open = cardIsOpen(cid, dflt);
+  var h = '<div class="bundle'+(done>=tot?' complete':'')+(open?'':' closed')+'" style="--rc:var(--accent)" data-card="'+esc(cid)+'">'+
+    '<div class="bundle-h fold"'+foldAttrs(open)+'><span class="room">'+esc(cat.name.toUpperCase())+'</span><h3>'+esc(g.name)+'</h3><span class="cnt">'+done+' / '+tot+'</span><span class="chev" aria-hidden="true"></span>'+
     (g.note?'<span class="reward">'+esc(g.note)+'</span>':'')+'</div><ul class="bitems">';
   items.forEach(function(it){
     var key = perfKey(cat,it), on = !!state.done[key];
@@ -542,23 +626,25 @@ function renderPerf(){
         return true;
       });
       if(!items.length) return; shown += items.length;
-      cards.push(perfCard(cat, g, items));
+      cards.push(perfCard(cat, g, items, !!needle));
     });
   });
   document.getElementById('pcount').textContent = shown+' of '+all+' requirements';
   list.innerHTML = cards.length ? cards.join('') : '<p class="empty">Nothing matches. Clear the search or change the category.</p>';
   bindSteps(list, function(){ renderPerf(); });
+  bindFolds(list);
 }
 document.getElementById('pq').addEventListener('input', function(){ state.pq = this.value; save(); renderPerf(); });
 
 /* ---------- PEOPLE ---------- */
 function pplKey(cid, it){ return 'pp:'+cid+':'+it.id; }
-function pplCard(c){
+function pplCard(c, dflt){
   var tot=0, done=0;
   c.path.forEach(function(it){ tot++; if(state.done[pplKey(c.id,it)]) done++; });
   var items = c.path.filter(function(it){ return !(state.pplShow==='todo' && state.done[pplKey(c.id,it)]); });
-  var h = '<div class="bundle'+(done>=tot?' complete':'')+'" style="--rc:var(--'+(c.kind==='Bachelor'?'p1':c.kind==='Bachelorette'?'p2':'accent')+')">'+
-    '<div class="bundle-h'+(ART.map[c.name]?' withpic':'')+'">'+(ART.map[c.name]?'<span class="pic">'+icon(c.name, 64)+'</span>':'')+'<span class="room">'+esc((c.kind||'').toUpperCase())+(c.birthday?' \u00b7 BIRTHDAY '+esc(c.birthday.toUpperCase()):'')+'</span><h3>'+esc(c.name)+'</h3><span class="cnt">'+done+' / '+tot+'</span>'+
+  var cid = 'pp:'+c.id, open = cardIsOpen(cid, dflt);
+  var h = '<div class="bundle'+(done>=tot?' complete':'')+(open?'':' closed')+'" style="--rc:var(--'+(c.kind==='Bachelor'?'p1':c.kind==='Bachelorette'?'p2':'accent')+')" data-card="'+esc(cid)+'">'+
+    '<div class="bundle-h fold'+(ART.map[c.name]?' withpic':'')+'"'+foldAttrs(open)+'>'+(ART.map[c.name]?'<span class="pic">'+icon(c.name, 64)+'</span>':'')+'<span class="room">'+esc((c.kind||'').toUpperCase())+(c.birthday?' \u00b7 BIRTHDAY '+esc(c.birthday.toUpperCase()):'')+'</span><h3>'+esc(c.name)+'</h3><span class="cnt">'+done+' / '+tot+'</span><span class="chev" aria-hidden="true"></span>'+
     (c.lives?'<span class="reward">'+esc(c.lives)+(c.find?' \u00b7 '+esc(c.find):'')+'</span>':'')+'</div>';
   if(c.loves || c.likes || c.hates){
     h += '<div class="bio">'+(c.cheap?'<span><b>Easy love:</b> '+esc(c.cheap)+'</span>':'')+(c.loves?'<span><b>Loves:</b> '+esc(c.loves)+'</span>':'')+(c.likes?'<span><b>Likes:</b> '+esc(c.likes)+'</span>':'')+(c.hates?'<span><b>Never:</b> '+esc(c.hates)+'</span>':'')+'</div>';
@@ -586,8 +672,10 @@ function renderPeople(){
     if(state.ppl==='Bachelor' || state.ppl==='Bachelorette') return c.kind===state.ppl;
     return c.id===state.ppl;
   });
-  list.innerHTML = cards.length ? cards.map(pplCard).join('') : '<p class="empty">Nothing to show.</p>';
+  var single = ['all','Other','Bachelor','Bachelorette'].indexOf(state.ppl)===-1;
+  list.innerHTML = cards.length ? cards.map(function(c){ return pplCard(c, single); }).join('') : '<p class="empty">Nothing to show.</p>';
   bindSteps(list, function(){ renderPeople(); });
+  bindFolds(list);
 }
 
 /* ---------- LEGEND ---------- */

@@ -4,6 +4,8 @@
   var errors = [];
   window.addEventListener('error', function(e){ errors.push('window.error: '+e.message); });
   var log = [];
+  /* folded cards hide their items from innerText; open everything for the placeholder scan */
+  var ss = document.createElement('style'); ss.id = 'sweepstyle'; ss.textContent = '.bundle.closed .bitems,.bundle.closed .bio,.bundle.closed .rmnote{display:block!important}'; document.head.appendChild(ss);
   function q(s){ return document.querySelector(s); }
   function qa(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); }
   function setSel(id, v){ var s = q('#'+id); s.value = v; s.dispatchEvent(new Event('change')); }
@@ -55,6 +57,16 @@
     cb.checked = false; cb.dispatchEvent(new Event('change'));
   });
   var navText = q('#seasonnav').textContent; if(navText.indexOf('/')===-1) errors.push('season nav has no counts');
+  /* up next: three unticked steps, ticking there syncs the route and advances */
+  var un = qa('#upnext .step'); if(un.length!==3) errors.push('up next shows '+un.length+' steps, expected 3');
+  var unId = un[0] && un[0].getAttribute('data-id'); var unCb = q('#nx-'+unId);
+  unCb.checked = true; unCb.dispatchEvent(new Event('change'));
+  var rcb = q('#route [id="chk-'+unId+'"]'); if(!rcb || !rcb.checked) errors.push('up next tick did not sync the route step');
+  if(q('#upnext .step').getAttribute('data-id')===unId) errors.push('up next did not advance after a tick');
+  rcb.checked = false; rcb.dispatchEvent(new Event('change'));
+  if(q('#upnext .step').getAttribute('data-id')!==unId) errors.push('up next did not restore after the untick');
+  var wh = q('#upnext .where'); click(wh); if(q('#route .phase[data-pid="'+wh.getAttribute('data-pid')+'"]').classList.contains('closed')) errors.push('up next phase link did not open the phase');
+  log.push('up next: '+qa('#upnext .step').length+' steps, first '+unId);
   /* brief */
   var brief = q('#brief'); click(brief.querySelector('.brief-h')); if(brief.classList.contains('closed')) errors.push('brief did not open'); scan('brief open'); click(brief.querySelector('.brief-h'));
   /* setup toggle */
@@ -74,6 +86,12 @@
     ['todo','oneshot','all'].forEach(function(v){ setSel('bshowSel', v); log.push('bshow '+set+' '+v+': '+qa('#bundleList .bundle').length); });
   });
   setSel('bsetSel','std'); setSel('roomSel','all'); setSel('bshowSel','all');
+  /* folds and room tiles */
+  var fh = q('#bundleList .bundle-h.fold'); var fcard = fh.parentNode; var fWas = fcard.classList.contains('closed');
+  click(fh); if(fcard.classList.contains('closed')===fWas) errors.push('bundle fold did not toggle'); click(fh); if(fcard.classList.contains('closed')!==fWas) errors.push('bundle fold did not toggle back');
+  var tile = q('#roomnav [data-room]'); var tileRoom = tile.getAttribute('data-room'); click(tile);
+  if(q('#roomSel').value!==tileRoom) errors.push('room tile did not filter'); if(qa('#bundleList .bundle.closed').length) errors.push('room filter should open its bundles');
+  click(q('#roomnav [data-room]')); if(q('#roomSel').value!=='all') errors.push('room tile did not toggle back to all');
   /* tick items in the first bundle until complete */
   var b0 = q('#bundleList .bundle'); var need = parseInt(b0.querySelector('.cnt').textContent.split('/')[1], 10);
   var boxes = qa('#bundleList .bundle:first-child input[type=checkbox]');
@@ -98,6 +116,7 @@
   if(q('#pcatSel').value!=='all') errors.push('perf cat did not reset to all');
   if(!qa('#perfRoute .phase').length) errors.push('perfection road missing');
   qa('#perfRoute .phase').forEach(function(ph, i){ var hd = ph.querySelector('.phase-h'); var was = ph.classList.contains('closed'); click(hd); if(ph.classList.contains('closed')===was) errors.push('perf phase '+i+' did not toggle'); });
+  var pfh = q('#perfList .bundle-h.fold'); var pfWas = pfh.parentNode.classList.contains('closed'); click(pfh); if(pfh.parentNode.classList.contains('closed')===pfWas) errors.push('perf fold did not toggle'); click(pfh);
   var pcb = q('#perfList input[type=checkbox]'); var before = q('#pmeter .big b').textContent;
   pcb.checked = true; pcb.dispatchEvent(new Event('change'));
   if(!q('#perfList input[type=checkbox]').checked) errors.push('perf tick lost after re-render');
@@ -111,6 +130,7 @@
   goView('people');
   qa('#pplSel option').forEach(function(o){ setSel('pplSel', o.value); var n = qa('#peopleList .bundle').length; if(!n) errors.push('people '+o.value+': no cards'); log.push('people '+o.value+': '+n); });
   setSel('pplSel','all');
+  var ph0 = q('#peopleList .bundle-h.fold'); var phWas = ph0.parentNode.classList.contains('closed'); click(ph0); if(ph0.parentNode.classList.contains('closed')===phWas) errors.push('people fold did not toggle'); click(ph0);
   var ppcb = q('#peopleList input[type=checkbox]'); ppcb.checked = true; ppcb.dispatchEvent(new Event('change')); if(!q('#peopleList input[type=checkbox]').checked) errors.push('people tick lost'); var ppcb2 = q('#peopleList input[type=checkbox]'); ppcb2.checked = false; ppcb2.dispatchEvent(new Event('change'));
   ['todo','all'].forEach(function(v){ setSel('pplShowSel', v); });
   scan('people');
@@ -140,5 +160,6 @@
   click(q('#proBtn')); var whyShown = qa('#route .why').filter(function(el){ return el.offsetParent !== null; }).length; if(!whyShown) errors.push('explanations did not show with pro off'); click(q('#proBtn'));
   /* ---- persistence ---- */
   var saved = JSON.parse(localStorage.getItem('farmhand-route:v1')); if(!saved || saved.view!=='route') errors.push('state not saved');
+  ss.remove();
   return {errors: errors, log: log};
 })();
