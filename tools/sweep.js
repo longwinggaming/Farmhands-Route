@@ -123,6 +123,7 @@
   goView('legend');
   qa('#legSel option').forEach(function(o){ if(!o.value) return; setSel('legSel', o.value); var sec = q('#leg-'+o.value); if(!sec || sec.classList.contains('closed')) errors.push('legend '+o.value+' did not open'); if(!sec.querySelectorAll('table').length && !sec.querySelectorAll('.lblock').length) errors.push('legend '+o.value+' empty'); });
   qa('.legend-sec > h2').forEach(function(h){ click(h); });
+  ['sturgeon','walleye','robin','zzzz',''].forEach(function(term){ var inp = q('#lq'); inp.value = term; inp.dispatchEvent(new Event('input')); var rows = qa('#legendBody tbody tr').length; log.push('legend search "'+term+'": '+rows+' rows ('+q('#lcount').textContent+')'); if(term==='sturgeon' && rows < 2) errors.push('legend search found too few Sturgeon rows'); if(term==='zzzz' && !q('#legendBody .empty')) errors.push('legend search: no empty message'); if(term==='sturgeon' && qa('#legendBody .legend-sec.closed').length) errors.push('legend search left sections closed'); });
   scan('legend');
   qa('.legend-sec').forEach(function(s){ if(!s.classList.contains('closed')) click(s.querySelector('h2')); });
   /* ---- Items ---- */

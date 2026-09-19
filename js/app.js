@@ -6,7 +6,7 @@
 var KEY = 'farmhand-route:v1';
 var VIEWS = ['route','bundles','focus','perf','people','legend','items'];
 var state = {view:'route', pro:true, season:'spring', setupOpen:true, briefOpen:false, coop:true, who:'both', set:'std', engines:['berries'],
-  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:'', pcat:'all', pshow:'all', pq:'', ppl:'all', pplShow:'all'};
+  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:'', pcat:'all', pshow:'all', pq:'', ppl:'all', pplShow:'all', lq:''};
 try{
   var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
   if(saved && typeof saved === 'object'){
@@ -32,6 +32,7 @@ try{
     if(['all','todo'].indexOf(saved.pshow)>-1) state.pshow = saved.pshow;
     if(typeof saved.pq==='string') state.pq = saved.pq;
     if(typeof saved.ppl==='string') state.ppl = saved.ppl;
+    if(typeof saved.lq==='string') state.lq = saved.lq;
     if(['all','todo'].indexOf(saved.pplShow)>-1) state.pplShow = saved.pplShow;
   }
 }catch(e){}
@@ -604,19 +605,38 @@ function renderLegend(){
     if(!v) return; state.legendOpen[v] = true; save(); renderLegend();
     var s = document.getElementById('leg-'+v); if(s) s.scrollIntoView({block:'start'});
   });
+  var lq = document.getElementById('lq'); if(lq && lq.value !== state.lq) lq.value = state.lq;
+  var needle = state.lq.trim().toLowerCase();
+  var hits = 0, tables = 0, noteCount = 0;
   var h = '';
   secs.forEach(function(sec){
-    var open = !!state.legendOpen[sec.id];
-    h += '<section class="legend-sec'+(open?'':' closed')+'" id="leg-'+esc(sec.id)+'" data-sid="'+esc(sec.id)+'"><h2 role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+esc(sec.title.toUpperCase())+'</h2>';
+    var open = needle ? true : !!state.legendOpen[sec.id];
+    var inner = '';
     sec.blocks.forEach(function(b){
-      h += '<div class="lblock"><h3>'+esc(b.h)+'</h3>';
-      if(b.p) h += '<p>'+esc(b.p)+'</p>';
-      if(b.table) h += tableHTML(b.table);
-      if(b.notes && b.notes.length) h += '<ul>'+b.notes.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
-      h += '</div>';
+      var table = b.table, notes = b.notes || [], p = b.p;
+      if(needle){
+        var headHit = (b.h+' '+(b.p||'')).toLowerCase().indexOf(needle)>-1;
+        var rows = table ? table.rows.filter(function(r){ return r.join(' ').toLowerCase().indexOf(needle)>-1; }) : [];
+        var noteHits = notes.filter(function(n){ return n.toLowerCase().indexOf(needle)>-1; });
+        if(!headHit && !rows.length && !noteHits.length) return;
+        if(table && rows.length){ table = {cols:table.cols, rows:rows, num:table.num}; hits += rows.length; tables++; }
+        else if(table && headHit){ hits += table.rows.length; tables++; }
+        else table = null;
+        notes = headHit ? notes : noteHits; if(!headHit) p = '';
+        if(!headHit) noteCount += noteHits.length;
+      }
+      inner += '<div class="lblock"><h3>'+esc(b.h)+'</h3>';
+      if(p) inner += '<p>'+esc(p)+'</p>';
+      if(table) inner += tableHTML(table);
+      if(notes.length) inner += '<ul>'+notes.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
+      inner += '</div>';
     });
-    h += '</section>';
+    if(needle && !inner) return;
+    h += '<section class="legend-sec'+(open?'':' closed')+'" id="leg-'+esc(sec.id)+'" data-sid="'+esc(sec.id)+'"><h2 role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+esc(sec.title.toUpperCase())+'</h2>'+inner+'</section>';
   });
+  var lc = document.getElementById('lcount');
+  if(lc){ var parts = []; if(hits) parts.push(hits+(hits===1?' row':' rows')+' in '+tables+(tables===1?' table':' tables')); if(noteCount) parts.push(noteCount+(noteCount===1?' note':' notes')); lc.textContent = needle ? (parts.length ? parts.join(' · ') : 'Nothing matches') : ''; }
+  if(needle && !h) h = '<p class="empty">Nothing matches. Try the name as the game spells it.</p>';
   body.innerHTML = h;
   body.querySelectorAll('.legend-sec>h2').forEach(function(hd){
     var go = function(){ var s = hd.parentNode, id = s.getAttribute('data-sid'); state.legendOpen[id] = s.classList.contains('closed'); save(); renderLegend(); };
@@ -686,6 +706,7 @@ function renderItems(){
   list.innerHTML = rows.length ? rows.map(itemCard).join('') : '<p class="empty">Nothing matches. Clear the search or change the type.</p>';
 }
 document.getElementById('iq').addEventListener('input', function(){ state.iQ = this.value; save(); renderItems(); });
+document.getElementById('lq').addEventListener('input', function(){ state.lq = this.value; save(); renderLegend(); });
 
 /* ---------- BOOT ---------- */
 function renderAll(){ renderViews(); renderSetup(); renderBrief(); renderFocus(); renderRoute(); renderNav(); renderFinish(); renderNotes(); renderBundles(); renderPerf(); renderPeople(); renderLegend(); renderItems(); }

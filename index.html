@@ -550,7 +550,11 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
     <p class="callout-line">Reference tables. Tap a section.</p>
     <div class="callout-body"><p>The tables the game never puts on one screen: every crop with its seed price and profit per day, every bundle fish with its window, birthdays with a cheap loved gift, the skills and professions, energy and luck, the calendar with its festivals and closed days, and the artisan maths.</p></div>
   </section>
-  <div class="panel" style="margin-top:14px"><div class="field"><label class="eyebrow" for="legSel">Jump to section</label><select id="legSel" class="sel"></select></div></div>
+  <div class="panel bfilters" style="margin-top:14px">
+    <input type="search" id="lq" placeholder="Search the legend: a fish, a crop, a villager" autocomplete="off" aria-label="Search the legend">
+    <div class="field"><label class="eyebrow" for="legSel">Jump to section</label><select id="legSel" class="sel"></select></div>
+    <p class="count" id="lcount"></p>
+  </div>
   <div id="legendBody"></div>
 </div>
 
@@ -570,11 +574,11 @@ body:not(.coop-on) .tag.p1,body:not(.coop-on) .tag.p2{display:none}
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/data.js?v=9"></script>
-<script src="js/bundles.js?v=9"></script>
-<script src="js/legend.js?v=9"></script>
-<script src="js/items.js?v=9"></script>
-<script src="js/perfection.js?v=9"></script>
-<script src="js/people.js?v=9"></script>
-<script src="js/art.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/data.js?v=10"></script>
+<script src="js/bundles.js?v=10"></script>
+<script src="js/legend.js?v=10"></script>
+<script src="js/items.js?v=10"></script>
+<script src="js/perfection.js?v=10"></script>
+<script src="js/people.js?v=10"></script>
+<script src="js/art.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
