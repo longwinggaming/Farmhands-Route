@@ -4,6 +4,8 @@ A Stardew Valley 1.6 planner for two players on one farm: the Community Center d
 
 Sections: Route (Spring 1 to Winter 28, tickable), Bundles (standard and remixed), Focus (money engines), Perfection, People (birthdays, gifts, heart events), Legend (fish, crops, artisan goods, skills, calendar), Items.
 
+Live: https://longwinggaming.github.io/Farmhands-Route/ (open once in Safari, Share, Add to Home Screen; it then works offline).
+
 ## Running it
 
 Static files, no build step. Open `index.html` through any web server (for example `python -m http.server 8766` in this folder). Installed as a home-screen app it works with no connection: `sw.js` caches everything on first load.
