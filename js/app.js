@@ -813,4 +813,16 @@ function fallbackCopy(txt){
 document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
 document.getElementById('resetBtn').addEventListener('click', function(){ state.done = {}; state.phaseOpen = {}; save(); renderAll(); toast('Ticks cleared'); });
 renderAll();
+
+/* ---------- OFFLINE ---------- */
+/* the service worker caches the whole app on hosts we control (GitHub Pages, localhost); never on the artifact host */
+if('serviceWorker' in navigator && window.top === window && /(^localhost$|\.github\.io$)/.test(location.hostname)){
+  try{
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      if(reg.update) reg.update().catch(function(){});
+      var had = !!navigator.serviceWorker.controller, reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){ if(had && !reloading){ reloading = true; location.reload(); } });
+    }).catch(function(){});
+  }catch(e){}
+}
 })();
