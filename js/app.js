@@ -6,7 +6,7 @@
 var KEY = 'farmhand-route:v1';
 var VIEWS = ['route','bundles','focus','perf','people','legend','items'];
 var state = {view:'route', pro:true, season:'spring', setupOpen:false, briefOpen:false, coop:true, who:'both', set:'std', engines:['berries'],
-  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:'', pcat:'all', pshow:'all', pq:'', ppl:'all', pplShow:'all', lq:'', cardOpen:{}};
+  done:{}, phaseOpen:{}, legendOpen:{}, room:'all', bshow:'all', iCat:'all', iSrc:'all', iQ:'', pcat:'all', pshow:'all', pq:'', ppl:'all', pplShow:'all', lq:'', cardOpen:{}, doneOpen:false};
 try{
   var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
   if(saved && typeof saved === 'object'){
@@ -34,6 +34,7 @@ try{
     if(typeof saved.ppl==='string') state.ppl = saved.ppl;
     if(typeof saved.lq==='string') state.lq = saved.lq;
     if(saved.cardOpen && typeof saved.cardOpen==='object') state.cardOpen = saved.cardOpen;
+    if(typeof saved.doneOpen==='boolean') state.doneOpen = saved.doneOpen;
     if(['all','todo'].indexOf(saved.pplShow)>-1) state.pplShow = saved.pplShow;
   }
 }catch(e){}
@@ -51,9 +52,12 @@ function joinList(arr, none){
   if(arr.length===1) return arr[0];
   return arr.slice(0,-1).join(', ') + ' and ' + arr[arr.length-1];
 }
-function toast(msg){
-  var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('on'); }, 1800);
+function toast(msg, action){
+  var t = document.getElementById('toast');
+  t.innerHTML = '<span>'+esc(msg)+'</span>'+(action ? '<button type="button">'+esc(action.label)+'</button>' : '');
+  if(action) t.querySelector('button').addEventListener('click', function(){ t.classList.remove('on'); action.fn(); });
+  t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('on'); }, action ? 6000 : 1800);
 }
 /* a step is visible when it matches the bundle set and, in co-op, the chosen player */
 function stepVisible(st){
@@ -209,15 +213,27 @@ function phaseIsOpen(ph, firstOpenPid){
   if(typeof state.phaseOpen[ph.pid]==='boolean') return state.phaseOpen[ph.pid];
   return ph.pid === firstOpenPid;
 }
-function bindSteps(root, after){
+function bindSteps(root, after, undoable){
   root.querySelectorAll('input[type=checkbox][id^="chk-"]').forEach(function(cb){
     cb.addEventListener('change', function(){
       var id = cb.id.replace('chk-','');
-      if(cb.checked) state.done[id] = true; else delete state.done[id];
+      if(cb.checked) state.done[id] = Date.now(); else delete state.done[id];
       var li = cb.closest('.step,.bitem'); if(li) li.classList.toggle('done', cb.checked);
       save(); if(after) after();
+      if(undoable && cb.checked) offerUndo(id, li);
     });
   });
+}
+/* a tick can be taken back from the toast for a few seconds */
+function offerUndo(id, li){
+  var t = li ? li.querySelector('.t') : null; var label = t ? t.textContent.replace(/^P[12]/,'').trim() : id;
+  if(label.length > 48) label = label.slice(0, 46) + '\u2026';
+  toast('Done: ' + label, {label:'Undo', fn:function(){ delete state.done[id]; save(); renderAll(); }});
+}
+/* mirror a tick onto the route list without re-rendering it */
+function syncStep(id, on){
+  var rc = document.querySelector('#route [id="chk-'+id+'"]');
+  if(rc){ rc.checked = on; var li = rc.closest('.step'); if(li) li.classList.toggle('done', on); }
 }
 
 /* ---------- ROUTE ---------- */
@@ -253,9 +269,10 @@ function renderRoute(){
   sec.innerHTML = h;
   root.appendChild(sec);
   bindPhaseHeads(root);
-  bindSteps(root, function(){ renderNav(); refreshPhaseCounts(); renderUpNext(); renderFocus(); });
+  bindSteps(root, function(){ renderNav(); refreshPhaseCounts(); renderUpNext(); renderDone(); renderFocus(); }, true);
   renderNext();
   renderUpNext();
+  renderDone();
 }
 function bindPhaseHeads(root){
   root.querySelectorAll('.phase-h').forEach(function(hd){
@@ -309,8 +326,20 @@ function upNextRow(st, ph){
     '<input type="checkbox" id="nx-'+esc(st.id)+'">'+
     '<label class="t" for="nx-'+esc(st.id)+'">'+pchip(p)+esc(st.t)+'</label>'+
     '<span class="cost">'+esc(st.c||'')+'</span>'+
-    '<div class="meta"><button type="button" class="where" data-pid="'+esc(ph.pid)+'">'+esc(ph.kind==='base' ? ph.t : ph.label+' · '+ph.t)+'</button>'+(st.risk?'<span class="tag risk">'+esc(st.risk)+'</span>':'')+'</div>'+
+    '<div class="meta">'+whereBtn(ph)+(st.risk?'<span class="tag risk">'+esc(st.risk)+'</span>':'')+'</div>'+
   '</li>';
+}
+function whereBtn(ph){ return '<button type="button" class="where" data-pid="'+esc(ph.pid)+'">'+esc(ph.kind==='base' ? ph.t : ph.label+' · '+ph.t)+'</button>'; }
+/* the phase links open that phase in the list below and scroll to it */
+function bindWhere(el){
+  el.querySelectorAll('.where').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pid = b.getAttribute('data-pid'); var ph = document.querySelector('#route .phase[data-pid="'+pid+'"]'); if(!ph) return;
+      state.phaseOpen[pid] = true; save();
+      ph.classList.remove('closed'); ph.querySelector('.phase-h').setAttribute('aria-expanded', 'true');
+      ph.scrollIntoView({block:'start', behavior:'smooth'});
+    });
+  });
 }
 function renderUpNext(){
   var el = document.getElementById('upnext'); if(!el) return;
@@ -325,24 +354,54 @@ function renderUpNext(){
   el.innerHTML = h;
   el.querySelectorAll('input[type=checkbox]').forEach(function(cb){
     cb.addEventListener('change', function(){
-      var id = cb.id.replace('nx-','');
-      if(cb.checked) state.done[id] = true; else delete state.done[id];
-      save();
-      var rc = document.querySelector('#route [id="chk-'+id+'"]');
-      if(rc){ rc.checked = cb.checked; var li = rc.closest('.step'); if(li) li.classList.toggle('done', cb.checked); }
-      refreshPhaseCounts(); renderNav(); renderFocus(); renderUpNext();
+      var id = cb.id.replace('nx-',''), li = cb.closest('.step');
+      if(cb.checked) state.done[id] = Date.now(); else delete state.done[id];
+      save(); syncStep(id, cb.checked);
+      refreshPhaseCounts(); renderNav(); renderFocus(); renderUpNext(); renderDone();
+      if(cb.checked) offerUndo(id, li);
     });
   });
-  el.querySelectorAll('.where').forEach(function(b){
-    b.addEventListener('click', function(){
-      var pid = b.getAttribute('data-pid'); var ph = document.querySelector('#route .phase[data-pid="'+pid+'"]'); if(!ph) return;
-      state.phaseOpen[pid] = true; save();
-      ph.classList.remove('closed'); ph.querySelector('.phase-h').setAttribute('aria-expanded', 'true');
-      ph.scrollIntoView({block:'start', behavior:'smooth'});
-    });
-  });
+  bindWhere(el);
   var nb = document.getElementById('unNext');
   if(nb) nb.addEventListener('click', function(){ gotoSeason(SEASONS[i+1].id); el.scrollIntoView({block:'start'}); });
+}
+
+/* ---------- DONE THIS SEASON ---------- */
+function doneSteps(season){
+  var out = [];
+  allPhases(season).forEach(function(ph){ ph.steps.forEach(function(st){ if(stepVisible(st) && state.done[st.id]) out.push({st:st, ph:ph, t:(+state.done[st.id]||0)}); }); });
+  out.sort(function(a,b){ return b.t - a.t; });
+  return out;
+}
+function doneRow(st, ph){
+  var p = st.p|0;
+  return '<li class="step done'+(p?' p'+p:'')+'" data-id="'+esc(st.id)+'">'+
+    '<input type="checkbox" id="dn-'+esc(st.id)+'" checked>'+
+    '<label class="t" for="dn-'+esc(st.id)+'">'+pchip(p)+esc(st.t)+'</label><span class="cost"></span>'+
+    '<div class="meta">'+whereBtn(ph)+'</div>'+
+  '</li>';
+}
+function renderDone(){
+  var el = document.getElementById('donebox'); if(!el) return;
+  var season = currentSeason(), items = doneSteps(season);
+  el.classList.toggle('closed', !state.doneOpen);
+  var h = '<div class="un-h" role="button" tabindex="0" aria-expanded="'+(state.doneOpen?'true':'false')+'"><h2>DONE<small>'+esc(season.name)+', newest first. Untick to put a step back.</small></h2><span class="cnt">'+items.length+'</span></div>';
+  if(items.length) h += '<ul class="steps">'+items.map(function(x){ return doneRow(x.st, x.ph); }).join('')+'</ul>';
+  else h += '<div class="un-done"><span>Nothing ticked yet this season.</span></div>';
+  el.innerHTML = h;
+  var hd = el.querySelector('.un-h');
+  var go = function(){ state.doneOpen = !state.doneOpen; save(); renderDone(); };
+  hd.addEventListener('click', go);
+  hd.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); go(); } });
+  el.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      if(cb.checked) return;
+      var id = cb.id.replace('dn-','');
+      delete state.done[id]; save(); syncStep(id, false);
+      refreshPhaseCounts(); renderNav(); renderFocus(); renderUpNext(); renderDone();
+    });
+  });
+  bindWhere(el);
 }
 
 /* ---------- NAV + FINISH + NOTES ---------- */
@@ -556,7 +615,7 @@ function renderFocus(){
   });
   if(!h) h = '<p class="empty">Nothing picked. Choose an engine above.</p>';
   el.innerHTML = h;
-  bindSteps(el, function(){ renderNav(); renderRoute(); });
+  bindSteps(el, function(){ renderNav(); renderRoute(); }, true);
 }
 
 /* ---------- PERFECTION ---------- */
@@ -612,7 +671,7 @@ function renderPerf(){
     phases.forEach(function(ph){ if(firstOpen) return; var c = phaseCounts(ph); if(c.done < c.tot) firstOpen = ph.pid; });
     rr.innerHTML = phases.map(function(ph){ return phaseBlockHTML(ph, phaseIsOpen(ph, firstOpen), phaseCounts(ph)); }).join('');
     bindPhaseHeads(rr);
-    bindSteps(rr, function(){ phases.forEach(function(ph){ var el = rr.querySelector('.phase[data-pid="'+ph.pid+'"]'); if(!el) return; var c = phaseCounts(ph); el.querySelector('.cnt').textContent = c.done+'/'+c.tot; el.classList.toggle('complete', c.tot>0 && c.done===c.tot); }); });
+    bindSteps(rr, function(){ phases.forEach(function(ph){ var el = rr.querySelector('.phase[data-pid="'+ph.pid+'"]'); if(!el) return; var c = phaseCounts(ph); el.querySelector('.cnt').textContent = c.done+'/'+c.tot; el.classList.toggle('complete', c.tot>0 && c.done===c.tot); }); }, true);
   } else rr.innerHTML = '';
   /* the requirements */
   var list = document.getElementById('perfList'); var cards = [], shown = 0, all = 0;

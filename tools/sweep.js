@@ -67,6 +67,16 @@
   if(q('#upnext .step').getAttribute('data-id')!==unId) errors.push('up next did not restore after the untick');
   var wh = q('#upnext .where'); click(wh); if(q('#route .phase[data-pid="'+wh.getAttribute('data-pid')+'"]').classList.contains('closed')) errors.push('up next phase link did not open the phase');
   log.push('up next: '+qa('#upnext .step').length+' steps, first '+unId);
+  /* done panel + undo toast */
+  var un0 = q('#upnext .step').getAttribute('data-id'); var cb0 = q('#nx-'+un0); cb0.checked = true; cb0.dispatchEvent(new Event('change'));
+  if(!q('#toast').classList.contains('on') || !q('#toast button')) errors.push('no undo toast after an up next tick');
+  if(q('#donebox').classList.contains('closed')) click(q('#donebox .un-h'));
+  if(!qa('#donebox .step').length || qa('#donebox .step')[0].getAttribute('data-id')!==un0) errors.push('done panel did not list the ticked step first');
+  click(q('#toast button')); if(q('#route [id="chk-'+un0+'"]').checked) errors.push('undo did not untick the step');
+  if(qa('#donebox .step').length) errors.push('done panel not empty after undo');
+  cb0 = q('#nx-'+un0); cb0.checked = true; cb0.dispatchEvent(new Event('change'));
+  var dcb = q('#donebox input[type=checkbox]'); if(!dcb) errors.push('done panel row missing after tick'); else { dcb.checked = false; dcb.dispatchEvent(new Event('change')); if(q('#route [id="chk-'+un0+'"]').checked) errors.push('done panel untick did not sync the route'); }
+  if(!q('#donebox').classList.contains('closed')) click(q('#donebox .un-h'));
   /* brief */
   var brief = q('#brief'); click(brief.querySelector('.brief-h')); if(brief.classList.contains('closed')) errors.push('brief did not open'); scan('brief open'); click(brief.querySelector('.brief-h'));
   /* setup toggle */

@@ -449,6 +449,18 @@ body:not(.coop-on) .pchip{display:none}
   .roomnav div{padding:6px 8px}.roomnav .rw{display:none}
   .upnext{margin-top:14px}
 }
+/* done this season: folded list of ticked steps, newest first, untick in place */
+.donebox{border-top-color:var(--ink-2)}
+.donebox .un-h{cursor:pointer;user-select:none}
+.donebox .un-h h2{color:var(--ink-2)}
+.donebox .un-h::after{content:'\25BE';color:var(--ink-2);font-size:14px;margin-left:8px}
+.donebox.closed .un-h::after{content:'\25B8'}
+.donebox.closed .steps,.donebox.closed .un-done{display:none}
+/* toast with an undo button */
+.toast{display:flex;align-items:center;gap:12px;max-width:min(92vw,520px)}
+.toast.on{pointer-events:auto}
+.toast span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toast button{border:1px solid var(--bg);background:transparent;color:var(--bg);padding:3px 10px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{
   body{background:#fff;color:#000;padding-inline:0}
@@ -498,6 +510,8 @@ body:not(.coop-on) .pchip{display:none}
 </section>
 
 <section class="upnext" id="upnext" aria-label="Up next"></section>
+
+<section class="upnext donebox closed" id="donebox" aria-label="Done this season"></section>
 
 <div class="setup-sum" id="setupSum"></div>
 
@@ -616,11 +630,11 @@ body:not(.coop-on) .pchip{display:none}
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/data.js?v=11"></script>
-<script src="js/bundles.js?v=11"></script>
-<script src="js/legend.js?v=11"></script>
-<script src="js/items.js?v=11"></script>
-<script src="js/perfection.js?v=11"></script>
-<script src="js/people.js?v=11"></script>
-<script src="js/art.js?v=11"></script>
-<script src="js/app.js?v=11"></script>
+<script src="js/data.js?v=12"></script>
+<script src="js/bundles.js?v=12"></script>
+<script src="js/legend.js?v=12"></script>
+<script src="js/items.js?v=12"></script>
+<script src="js/perfection.js?v=12"></script>
+<script src="js/people.js?v=12"></script>
+<script src="js/art.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
